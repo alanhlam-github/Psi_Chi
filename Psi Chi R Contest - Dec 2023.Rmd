@@ -1,0 +1,108 @@
+---
+title: 'Psi Chi R Contest - Dec 2023'
+author: 'By Alan Lam'
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R Contest](https://osf.io/r86p2/)
+
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+```{r}
+#Load packages and import data
+
+#install.packages(ggplot2,dplyr,lubridate,readr)
+
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+theme_set(theme_bw())
+
+december=read.csv('C:/Users/alanh/Documents/R/Flight Data December 2023 Contest.csv')
+```
+
+
+## Level 1-
+Provide descriptive statistics for the actual_flown_miles variable. Indicate the **minimum** number of miles flow, the **maximum** number of miles flow, the **average** number of miles flown, and the **median** number of miles flown.
+
+```{r}
+sum(is.na(december$actual_flown_miles))
+
+min(december$actual_flown_miles,na.rm = T) #Minimum = 45
+
+max(december$actual_flown_miles,na.rm=T) #Maximum = 8440
+
+mean(december$actual_flown_miles,na.rm=T) #Average = 2477.738
+
+median(december$actual_flown_miles,na.rm=T) #Median = 1846
+```
+
+## Level 2-
+Describe the relationship between satisfaction (satisfaction_score) and delay time (arrival_delay_minutes). Note that for satisfaction_score a value of 1 is the lowest (dissatisfied) and 5 is the highest (satisfied). Note that negative values in the arrival delay minutes mean the flight was early, while positive values indicate the flight was late. 
+
+```{r}
+summary(december$satisfaction_score) #transform from char into numeric
+summary(december$arrival_delay_minutes)
+
+december$satisfaction_score=as.numeric(december$satisfaction_score)
+
+december$arrival_delay_minutes=as.numeric(december$arrival_delay_minutes)
+
+december1=december %>% 
+  filter(complete.cases(satisfaction_score))
+
+december2=december1 %>% 
+  filter(complete.cases(arrival_delay_minutes))
+
+cor.test(december2$satisfaction_score,december2$arrival_delay_minutes) #p-value < 2.2e-16, cor -0.07935616
+```
+
+## Level 3-
+Does satisfaction level (satisfaction_score) vary by the cabin (cabin_code) that they’re in? 
+
+```{r}
+summary(december2$satisfaction_score)
+
+december2 %>% 
+  ggplot(aes(x=cabin_code,y=satisfaction_score,fill=satisfaction_type))+
+  geom_col()+
+  labs(title='Satisfaction Score by Cabin Type',y='Satisfaction Score',x='Cabin Type',fill='Satisfaction Type')+
+  theme(plot.title = element_text(hjust=.5))
+
+#Yes. Per the column chart, there are varying levels of satisfaction by cabin type.
+```
+
+
+## Level 4-
+
+Describe the relationship between loyalty program membership (loyalty_program_level) and satisfaction (satisfaction_score). Hint: you’ll have to do some recoding for folks who don’t belong to a program
+
+```{r}
+december3=december2 %>% 
+  filter(complete.cases(loyalty_program_level))
+
+#Rename blanks as NA
+december3$loyalty_program_level[december3$loyalty_program_level==""]="Non-Membership"
+
+december3 %>% 
+  ggplot(aes(y=loyalty_program_level,x=satisfaction_score,fill=satisfaction_type))+
+  geom_col()+
+  labs(title='Loyalty and Satisfaction',y='Program Membership',x='Satisfaction Score',fill='Satisfaction Type')+
+  theme(plot.title = element_text(hjust=.5))
+
+```
+
+

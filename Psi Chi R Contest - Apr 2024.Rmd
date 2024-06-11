@@ -1,0 +1,181 @@
+---
+title: "Psi Chi R Contest - Apr 2024"
+author: "Alan Lam"
+#date: "`r Sys.Date()`"
+date: "`r format(Sys.Date(), '%d %B, %Y')`" 
+
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R Contest](https://osf.io/vt4we/)
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+## Load packages and import data
+```{r}
+
+#library(tidyverse)
+
+library(dplyr)
+library(purrr)
+
+dataset=read.csv('https://osf.io/download/mdsz6/')
+```
+
+## Check for NAs and NULLs
+```{r}
+#skim=skimr::skim(dataset)
+
+sum(is.na(dataset))
+sum(is.null(dataset))
+```
+
+## Level 1 
+-	Let’s get familiar with our data. Create a table that shows how many times each state is represented in the dataset (variable name: Statecurrent)
+-	One of our research questions is which subscales of the FACES are related to horizontal individualism? So let’s create the subscales we need to run the analyses
+
+o	Create by COShindivid (Horizontal Individualism) doing COS1 + COS5 + COS9 + COS13
+
+o	Create disengaged (FACEdisen) by FACES3 + FACES9 + FACES15 + FACES21 + FACES27 + FACES33 + FACES39
+
+o	Create enmeshed (FACEenmesh) by  FACES4 + FACES10 + FACES16 + FACES22 + FACES28 + FACES34 + FACES40
+
+o	Create Rigid (FACErigid) by  FACES5 + FACES11 + FACES17 + FACES23 + FACES29 + FACES35 + FACES41
+
+o	Create Chaotic (FACEchaotic) by FACES6 + FACES12 + FACES18 + FACES24 + FACES30 + FACES36 + FACES42
+
+o	Create Communication (FACEcomm) by FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52
+
+o	Create Satisfaction (FACEsatis) by FACES53 + FACES54 + FACES55 + FACES56 + FACES57 + FACES58 + FACES59 + FACES60 + FACES61 + FACES62
+
+```{r}
+dataset1=dataset %>% 
+  mutate(COShindivid=COS1 + COS5 + COS9 + COS13,
+         FACEdisen= FACES3 + FACES9 + FACES15 + FACES21 + FACES27 + FACES33 + FACES39,
+         FACEenmesh= FACES4 + FACES10 + FACES16 + FACES22 + FACES28 + FACES34 + FACES40,
+         FACErigid= FACES5 + FACES11 + FACES17 + FACES23 + FACES29 + FACES35 + FACES41,
+         FACEchaotic= FACES6 + FACES12 + FACES18 + FACES24 + FACES30 + FACES36 + FACES42,
+         FACEcomm= FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52,
+         FACEsatis= FACES53 + FACES54 + FACES55 + FACES56 + FACES57 + FACES58 + FACES59 + FACES60 + FACES61 + FACES62) %>% 
+  select(COS1,COShindivid,FACEdisen,FACEenmesh,FACErigid,FACEchaotic,FACEcomm,FACEsatis,everything())
+```
+
+## Level 2
+-	Provide the mean, standard deviation, median, and range of values for ‘FACEenmesh
+-	Provide the mean, standard deviation, median, and range of values for ‘COShindivid’
+-	Produce a visual that will show if the ‘FACEsatis’ variable contains any outliers. 
+
+```{r}
+library(purrr)
+
+purr_list=data.frame(FACEenmesh=dataset1$FACEenmesh,COShindivid=dataset1$COShindivid)
+
+desc_stat=function(x) {
+  list(mean=mean(x,na.rm=T),sd=sd(x,na.rm=T),
+       median=median(x,na.rm=T),range=range(x,na.rm=T))
+}
+
+stats=purr_list %>% 
+  map(desc_stat) %>% 
+  as.data.frame()
+
+print(stats) #the mean, standard deviation, median, and range for FACEenmesh and COShindivid
+```
+
+```{r}
+summary(dataset1$FACEsatis)
+
+FACE=na.omit(dataset1$FACEsatis) %>% 
+  data.frame() %>% 
+  rename(face=1)
+
+summary(FACE)
+
+boxplot(FACE$face,main='Party Crashers or Trendsetters? A Tale of Two Data Points',xlab='FACEsatis',ylab='Count',lwd=1.5,boxfill='darkgreen',pch=1.5,outcol='red')
+```
+
+### ggplot2 version of the above
+```{r}
+library(ggplot2)
+
+dataset1 %>%
+  ggplot(aes(y=FACEsatis))+
+  theme_bw()+
+  geom_boxplot(fill='darkgreen',outlier.color = 'red',lwd=1.5,outlier.size = 2)+
+  labs(title = 'Party Crashers or Trendsetters? A Tale of Two Data Points',x='FACEsatis',y='Count')+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+## Level 3
+-	Does the ‘COShindivid’ variable meet the assumption of normality? Show both a visual and key statistics.
+
+
+```{r}
+summary(dataset1$COShindivid)
+
+COSH=na.omit(dataset1$COShindivid) %>%
+  data.frame()
+
+summary(COSH)
+
+hist(COSH$.,freq=F,main = 'Long Tail, Big Dreams: A Look at Our Left-Skewed Distribution',ylab = 'Density',xlab='COShindivid',col='darkgreen')
+lines(density(COSH$.),lwd=2,col='red')
+
+shapiro.test(COSH$.) #No, COShindivid violates normality
+```
+
+### ggplot2 version of the above
+```{r}
+#library(ggplot)
+
+dataset1 %>%
+  filter(!is.na(COShindivid)) %>% 
+  ggplot(aes(x=COShindivid))+
+  theme_bw()+
+  geom_histogram(aes(y=..density..),col='black',fill='darkgreen',show.legend = F,bins=15)+
+  geom_density(col='red',lwd=2)+
+  labs(title = 'Long Tail, Big Dreams: A Look at Our Left-Skewed Distribution')+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+## Level 4
+-	Create a correlation matrix to show the relationship between COShindivid, FACEdisen, FACEenmesh, FACErigid, FACEchaotic, FACEcomm, FACEsatis
+
+```{r}
+cor_data=dataset1[,c(2:8)]
+
+cor_matrix=cor_data %>% 
+  na.omit() %>% 
+  cor() %>% 
+  round(digits = 2) %>% 
+  as.data.frame()
+
+plot(cor_matrix)
+```
+
+### Heatmap for correlation matrix
+```{r}
+use_color=colorRampPalette(c('lightblue','darkblue'))
+
+cor_matrix %>% 
+  as.matrix() %>% 
+  heatmap(margins = c(10,5),col=use_color(100),main = 'A Heatmap Exposé on Satisfaction and Communication')
+
+```
+
+
+```{r}
+sessionInfo()
+```
+

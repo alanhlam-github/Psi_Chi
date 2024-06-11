@@ -1,0 +1,142 @@
+---
+title: "Psi Chi R - June 2024"
+author: "Alan Lam"
+#date: "`r Sys.Date()`"
+date: "`r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: kable
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R](https://osf.io/3h4ge/)
+
+## Load packages and import data
+
+```{r}
+#library(tidyverse)
+
+library(dplyr)
+library(purrr)
+
+dataset=read.csv('https://osf.io/download/c3bfs/')
+```
+
+## Check the data
+
+```{r}
+head(dataset)
+
+#skimr::skim(dataset)
+```
+
+```{r}
+sum(is.na(dataset))
+
+sum(is.null(dataset))
+
+sum(!complete.cases(dataset))
+```
+
+## Level 1
+
+Let’s get familiar with our data. Create a table that shows the frequency of each type of Pokémon in the dataset (variable name: type1). 
+
+```{r}
+tab1 = dataset %>% 
+  group_by(type1) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+tab1
+```
+
+Next, let’s look at the representation of each generation of Pokémon in the dataset. Create a table that shows the number of Pokémon in the dataset associated with each generation (variable name: generation)
+```{r}
+tab2 = dataset %>% 
+  group_by(generation) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+tab2
+```
+
+
+## Level 2-
+
+Provide the mean, standard deviation, median, and range of values of attack stats (variable name: attack) for ‘Water’ type Pokémon (variable name: type1). 
+
+```{r}
+water_attack = dataset %>% 
+  filter(type1 == 'Water') %>% 
+  select(attack)
+
+#create function for desc stats
+desc_stat = function(x){
+  list(mean = mean(x,na.rm = T),
+  standard_dev = sd(x,na.rm = T),
+  median = median(x,na.rm = T),
+  range = range(x,na.rm = T))
+}
+
+map(water_attack,desc_stat)
+  
+```
+
+-Provide the mean, standard deviation, median, and range of values of speed stats (variable name: speed) for ‘Dragon’ type Pokémon (variable name: type1). 
+
+```{r}
+dragon_speed = dataset %>% 
+  filter(type1 == 'Dragon') %>% 
+  select(speed)
+
+map(dragon_speed,desc_stat)
+
+
+```
+
+## Level 3-
+
+Are there any outliers for the ‘total’ stat? What is the value(s), and which Pokémon(s) is/are associated with it?
+```{r}
+library(ggplot2)
+
+boxplot(dataset$total)
+
+dataset %>% 
+  ggplot(aes(x=total))+
+  geom_bar()
+
+```
+
+##Level 4-
+
+Is there a correlation between a Pokémon’s ‘total’ stat and their base level of experience? (variable: base_exp)-Create a visualization that shows the average ‘total’ stat based on the primary type of the Pokémon (type1)
+
+```{r}
+dataset2=dataset %>% 
+  mutate(base_exp2=as.numeric(base_exp)) %>% 
+  filter(complete.cases(base_exp2))
+
+cor.test(dataset2$total,dataset2$base_exp2)
+
+```
+
+```{r}
+cor_data = dataset2[,c(18,30)] %>% 
+  tibble()
+
+cor_matrix= cor_data %>% 
+  cor() %>% 
+  round(digits = 2) %>% 
+  as.data.frame()
+
+plot(cor_data)
+```
+

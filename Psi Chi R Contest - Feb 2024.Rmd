@@ -1,0 +1,173 @@
+---
+title: 'Psi Chi R Contest - Feb 2024'
+author: 'By Alan Lam'
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R Contest](https://osf.io/mzkft/)
+
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+```{r}
+#Load packages and import data
+
+#install.packages(tidyverse)
+
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+
+feb=read.csv('feb2024_imdb_top_1000.csv')
+```
+
+
+## Level 1 -
+To facilitate analyses, the ‘Runtime’ variable will need to be fixed so that ‘min’ is removed, and the column only contains numerical values. 
+-To facilitate analyses, the ‘Genre’ variable will need to be edited so that each genre separated by a comma is listed in its own respective column.
+
+```{r}
+feb2=feb %>% 
+  mutate(Genre =strsplit(Genre, ", ")) %>% 
+  unnest_wider(Genre,names_sep = "_")
+
+feb2$Runtime=gsub("min","",feb$Runtime) 
+
+
+```
+
+
+## Level 2-
+Provide the mean, standard deviation, median, and range of values for ‘IMDB_Rating’
+
+-Provide the mean, standard deviation, median, and range of values for ‘Gross’
+
+```{r}
+summary(feb2$IMDB_Rating)
+
+mean(feb2$IMDB_Rating,na.rm = T) #Mean is 7.949
+median(feb2$IMDB_Rating,na.rm = T) #Median is 7.9
+sd(feb2$IMDB_Rating,na.rm = T) #Standard dev. is 0.275
+range(feb2$IMDB_Rating,na.rm = T) #Range is 7.6 to 9.3
+
+summary(feb2$Gross)
+
+mean(feb2$Gross,na.rm = T) #Mean is $68,034,751
+median(feb2$Gross,na.rm = T) #Median is $23,530,892
+sd(feb2$Gross,na.rm = T) #Standard dev. is $109,750,043
+range(feb2$Gross,na.rm = T) #Range is $1,305 to $936,662,225
+
+```
+
+
+## Level 3-
+Provide the mean values for IMDB rating by Released Year-
+What is the mean ‘IMDB_rating’ of Romance movies?
+
+```{r}
+IMDB_Rating_by_Year=feb2 %>% 
+  group_by(Released_Year) %>% 
+  summarise(Mean_Rating=mean(IMDB_Rating,na.rm = T))
+
+print(IMDB_Rating_by_Year) #Results printed here
+
+feb3=feb2 %>% 
+  filter(Genre_1=='Romance' |
+         Genre_2=='Romance' |
+         Genre_3=='Romance')
+
+mean(feb3$IMDB_Rating,na.rm = T) #Mean rating of Romance movies is 7.9256
+
+```
+
+## Level 4-
+Create a plot that shows the average ‘IMDB_rating’ for Romance movies over time.
+-Find the star who was lead in the most romance movies
+
+```{r}
+
+Romance_Plot=feb3%>% 
+  mutate(Released_Year=as.numeric(Released_Year)) %>%
+  group_by(Released_Year) %>% 
+  summarise(Romance_Mean_Rating=mean(IMDB_Rating)) %>% 
+  ggplot(aes(x=Released_Year,y=Romance_Mean_Rating))+
+  geom_line(lwd=1,color='darkred') +
+  labs(title='The Peaks and Valleys of Love in Romance Movies from 1920 to 2020',subtitle ='Looking at years with the highest and lowest average IMDB ratings',x='Release Years',y='Average IMDB Rating')+
+  theme_bw()+
+  theme(plot.title = element_text(hjust=.5),
+        plot.subtitle = element_text(hjust = .5))+
+  expand_limits(x=2025,y=7.5)
+
+print(Romance_Plot) #Line plot on rating averages for romance movies
+
+Romance_Lead=feb3 %>% 
+  group_by(Lead_Star=Star1) %>% 
+  summarise(Movie_Count=n()) %>% 
+  arrange(-Movie_Count)
+
+print(Romance_Lead) #Cary Grant
+```
+
+## Extra Stuff - not part of the submission
+
+### Which the top ten directors with the highest average IMDB and Meta scores the most times
+```{r}
+library(forcats)
+
+feb2.1=feb2 %>% 
+  group_by(Director) %>% 
+  filter(Released_Year>=2000) %>% 
+  summarise(IMDB_Avg=mean(IMDB_Rating,na.rm = T),Meta_Avg=mean(Meta_score,na.rm = T),Headcount=n()) %>% 
+  arrange(desc(Headcount),desc(IMDB_Avg),desc(Meta_Avg)) %>% 
+  head(10) %>% 
+  mutate(Headcount=as.numeric(Headcount))
+```
+
+```{r,fig.cap='Column Chart on Top 10 directors'}
+feb2.1%>% 
+  ggplot(aes(x=fct_reorder(Director,-Headcount),y=Headcount))+
+  geom_col(fill='darkgreen')+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size = 7),
+        plot.title = element_text(hjust = .5),
+        plot.subtitle = element_text(hjust = .5))+
+  labs(y='Count',x='Directors',title='Top 10 Directors with the highest average IMDB and Meta ratings',subtitle = 'Looking at directors starting from year 2000 to now' )
+```
+
+## Aggregate count on genres 1-3
+```{r}
+feb3=feb2 %>% 
+  mutate(Genre=paste(Genre_1,Genre_2,Genre_3,sep = ", ")) %>% 
+  mutate(across(everything(), as.character)) %>% 
+  pivot_longer(cols = c('Genre_1','Genre_2','Genre_3'),names_to = "Genre_column",values_to = "Genre_Aggregate") %>% 
+  mutate(Gross=as.numeric(Gross),No_of_Votes=as.numeric(No_of_Votes))
+
+feb4=feb3%>% 
+  group_by(Genre_Aggregate) %>% 
+  summarise(count=n())
+
+feb4 %>% 
+  na.omit() %>% 
+  ggplot(aes(fill=count,y=fct_reorder(Genre_Aggregate,count),x=count)) +
+  theme_bw()+
+  geom_col()+
+  labs(fill=' ',title = 'Supply and Demand, or Supply OR Demand?',subtitle = 'Looking at genres that gets the most, and the least, production',y='Genres',x='Production Count' )+
+  expand_limits(x=800)+
+  theme(plot.title = element_text(hjust = .5),
+        plot.subtitle = element_text(hjust = .5))
+
+```
+
+

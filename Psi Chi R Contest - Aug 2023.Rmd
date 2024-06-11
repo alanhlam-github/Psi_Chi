@@ -1,0 +1,116 @@
+---
+title: "Psi Chi R Contest - August 2023"
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    code_folding: hide
+---
+[**Source**: Psi Chi R Contest - August](https://osf.io/jbn6a/wiki/home/)
+
+The Psi Chi R Contests are a great way to practice base R. Click **Source** for more info.
+
+
+
+## Data processing (level 1)
+
+```{r setup,include=F}
+#**Code will be revealed after the submission deadline.**
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+Write a script that will filter out participants who are missing values for the age variable
+```{r}
+#Write a script that will filter out participants who are missing values for the age variable
+august=read.csv('Aug_R_Contest.csv')
+
+missing_age= subset(august,complete.cases(Age))
+
+head(missing_age)
+
+write.csv(missing_age,file='see.csv')
+```
+
+## Descriptive Statistics (level 2)
+Create a variable called FACEcomm (Family Communication) by adding together the following items FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52
+```{r}
+#Create a variable called FACEcomm (Family Communication) by adding together the following items FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52
+
+missing_age$FACEcomm=missing_age$FACES43 + missing_age$FACES44 + missing_age$FACES45 + missing_age$FACES46 + missing_age$FACES47 + missing_age$FACES48 + missing_age$FACES49 + missing_age$FACES50 + missing_age$FACES51 + missing_age$FACES52
+
+```
+Note the average, standard deviation, and median values for the FACEcomm variable.
+Create a variable called SSBQtotal (Total Safe Sex Behavior) through two steps:
+
+Reverse Score SBQ2 INTO SBQ2R, SBQ7 INTO SBQ7R, SBQ8 INTO SBQ8R, SBQ14 INTO SBQ14R, SBQ16 INTO SBQ16R, SBQ17 INTO SBQ17R, SBQ22 INTO SBQ22R, SBQ24 INTO SBQ24R, SBQ25 INTO SBQ25R (1 = Always 2 = Most of the time 3 = Sometimes 4 = Never)
+
+Add the following items together: SBQ1 + SBQ2R + SBQ3 + SBQ4 + SBQ5 + SBQ6 + SBQ7R + SBQ8R + SBQ9 + SBQ10 + SBQ11 + SBQ12 + SBQ13 + SBQ14R + SBQ15 + SBQ16R + SBQ17R + SBQ18 + SBQ19 + SBQ20 + SBQ21 + SBQ22R + SBQ23 + SBQ24R + SBQ25R
+
+Note the average, standard deviation, and median values for the SSBQtotal variable
+```{r}
+#Note the average, standard deviation, and median values for the FACEcomm variable.
+
+mean_face=mean(missing_age$FACEcomm,na.rm=T)
+sd_face=sd(missing_age$FACEcomm,na.rm=T)
+median_face=median(missing_age$FACEcomm,na.rm=T)
+
+print(mean_face)
+print(sd_face)
+print(median_face)
+
+#Create a variable called SSBQtotal (Total Safe Sex Behavior) through two steps:
+
+
+#Reverse Score SBQ2 INTO SBQ2R, SBQ7 INTO SBQ7R, SBQ8 INTO SBQ8R, SBQ14 INTO SBQ14R, SBQ16 INTO SBQ16R, SBQ17 INTO SBQ17R, SBQ22 INTO SBQ22R, SBQ24 INTO SBQ24R, SBQ25 INTO SBQ25R (1 = Always 2 = Most of the time 3 = Sometimes 4 = Never)
+missing_age$SBQ2R =5 - missing_age$SBQ2
+missing_age$SBQ7R =5 - missing_age$SBQ7
+missing_age$SBQ8R =5 - missing_age$SBQ8
+missing_age$SBQ14R =5 - missing_age$SBQ14
+missing_age$SBQ16R =5 - missing_age$SBQ16
+missing_age$SBQ17R =5 - missing_age$SBQ17
+missing_age$SBQ22R =5 - missing_age$SBQ22
+missing_age$SBQ24R =5 - missing_age$SBQ24
+missing_age$SBQ25R =5 - missing_age$SBQ25
+
+#Add the following items together: SBQ1 + SBQ2R + SBQ3 + SBQ4 + SBQ5 + SBQ6 + SBQ7R + SBQ8R + SBQ9 + SBQ10 + SBQ11 + SBQ12 + SBQ13 + SBQ14R + SBQ15 + SBQ16R + SBQ17R + SBQ18 + SBQ19 + SBQ20 + SBQ21 + SBQ22R + SBQ23 + SBQ24R + SBQ25R
+missing_age$SSBQtotal=(missing_age$SBQ1 + missing_age$SBQ2R + missing_age$SBQ3 + missing_age$SBQ4 + missing_age$SBQ5 + missing_age$SBQ6 + missing_age$SBQ7R + missing_age$SBQ8R + missing_age$SBQ9 + missing_age$SBQ10 + missing_age$SBQ11 + missing_age$SBQ12 + missing_age$SBQ13 + missing_age$SBQ14R + missing_age$SBQ15 + missing_age$SBQ16R + missing_age$SBQ17R + missing_age$SBQ18 + missing_age$SBQ19 + missing_age$SBQ20 + missing_age$SBQ21 + missing_age$SBQ22R + missing_age$SBQ23 + missing_age$SBQ24R + missing_age$SBQ25R)
+
+#Note the average, standard deviation, and median values for the SSBQtotal variable
+mean1=mean(missing_age$SSBQtotal,na.rm=T)
+sd1=sd(missing_age$SSBQtotal,na.rm=T)
+median1=median(missing_age$SSBQtotal,na.rm=T)
+
+print(mean1)
+print(sd1)
+print(median1)
+```
+
+## Data visualization (level 3)
+Create a bar graph that shows the mean levels of FACEcomm and SSBQtotal
+```{r}
+#Create a bar graph that shows the mean levels of FACEcomm and SSBQtotal
+mean_facecomm=mean(missing_age$FACEcomm,na.rm=T)
+mean_ssbqtotal=mean(missing_age$SSBQtotal,na.rm=T)
+
+barplot(c(mean_facecomm,mean_ssbqtotal),names.arg=c('Family Communication','Total Safe Sex Behavior'),ylab = 'Mean', main ='Comparing Family Communication and Total Safe Sex Behavior')
+
+```
+
+## Inferential statistics (level 4)
+Test if there is an association between total safe sex behavior (SSBQtotal) and family communication (FACEcomm).
+```{r}
+#Test if there is an association between total safe sex behavior (SSBQtotal) and family communication (FACEcomm).
+
+test_cor=cor(missing_age$FACEcomm,missing_age$SSBQtotal,use='pairwise.complete.obs')
+
+print(test_cor)
+```
+
+```{r}
+#Scatter plot
+plot(missing_age$FACEcomm,missing_age$SSBQtotal,main='Between safe sex and family communication',xlab='Family Communication',ylab='Total Safe Sex Behavior')
+
+abline(lm(missing_age$SSBQtotal~missing_age$FACEcomm),col='red',lwd=2)
+```

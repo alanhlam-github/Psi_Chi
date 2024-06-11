@@ -1,0 +1,67 @@
+---
+title: "Psi Chi R Contest - July"
+author: "Alan Lam"
+date: "2023-07-30"
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    code_folding: show
+geometry: margin=.5in,top=.5in,bottom=.5in
+always_allow_html: yes
+---
+
+[**Source**: Psi Chi R Contest - July](https://osf.io/9f2mk/wiki/home/)
+
+The Psi Chi R Contests are a great way to practice base R. Click **Source** for more info.
+
+```{r}
+julycontest=read.csv('July_R_Contest.csv')
+
+head(julycontest)
+```
+
+## Data processing (level 1)
+```{r}
+#Write a script that will filter out participants who don’t have any siblings
+julycontest_subset = subset(julycontest,Siblings==0)
+
+```
+
+## Descriptive Statistics (level 2)
+```{r}
+#Create a variable called SUmarij by adding YRBS8 + YRBS14
+
+julycontest_subset$SUmarij=julycontest_subset$YRBS8 + julycontest_subset$YRBS14
+
+#Find the average number of times participants have used marijuana
+
+julycontest_mean=mean(julycontest_subset$SUmarij,na.rm=T)
+
+print(julycontest_mean)
+
+#Transform SUmarij into a binary variable where 0 = never used marijuana, and 1 = has used marijuana
+
+julycontest_subset$mari_binary= ifelse(julycontest_subset$SUmarij=='Never Used',0,'Has Used')
+
+write.csv(julycontest_subset,file='see.csv')
+```
+## Data visualization (level 3)
+```{r}
+#Use cross-tabs to make a table that shows the counts of marijuana use (never used/has used) by gender
+table_counts=table(julycontest_subset$mari_binary,julycontest_subset$Gender,useNA='always')
+
+print(table_counts)
+```
+
+## Inferential statistics (level 4)
+```{r}
+#Test if there is an association between marijuana use and number of siblings someone has
+
+corr_test=cor(julycontest_subset[,c('Siblings','SUmarij')], use='pairwise.complete.obs')
+
+print(corr_test)
+```

@@ -1,0 +1,110 @@
+---
+title: "Psi Chi R Contest - September 2023"
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: TRUE
+---
+[**Source**: Psi Chi R Contest](https://osf.io/x5qcn/wiki/home/)
+
+```{r setup,include=F}
+#**Code will be revealed after the submission deadline.**
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+```{r}
+#Load packages and import data
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+september=read.csv('Sept_R_Data.csv')
+```
+
+## Data processing (level 1)
+Write a script that will filter out participants who are missing values for the ‘Age’ variable
+
+Write a script that will filter out participants who are missing values for the ‘Stateborn’ variable
+```{r}
+sept_clean=september %>% 
+  dplyr::filter(!is.na(Age) & !is.na(Stateborn)) %>% 
+  dplyr::filter(str_detect(Age,'^[0-9]+$') & str_detect(Stateborn,'^[0-9]+$'))
+```
+
+## Descriptive Statistics (level 2)
+
+Create a variable called ‘CFPSCompas’ by summing together the following variables: FPS7, FPS8, FPS9, FPS10
+CFPSCompas is a variable that measures Compassionate Reverence
+
+Create a variable called ‘FACEsatis’ by summing together the following variables: FACES53, FACES54, FACES55, FACES56, FACES57, FACES58, FACES59, FACES60, FACES61, FACES62
+FACEsatis is a variable that measures Family Satisfaction
+```{r}
+sept_clean=sept_clean %>% 
+  mutate(FACEsatis=FACES53+FACES54+FACES55+FACES56+ FACES57+FACES58+FACES59+FACES60+ FACES61+FACES62,CFPSCompas=FPS7+FPS8+FPS9+FPS10) %>% 
+  filter(!is.na(FACEsatis) & !is.na(CFPSCompas))
+
+```
+
+## Data visualization (level 3)
+
+Create a graph that shows the mean levels of Family Satisfaction by gender
+
+```{r}
+#Create mean for FACC and keep `Gender` as 123 rather than mutate into M/F
+sept_clean2=sept_clean %>% 
+  filter(!is.na(Gender)) %>% 
+  select(Gender,FACEsatis,CFPSCompas,dplyr::everything())
+
+sept_gender_face=sept_clean2 %>% 
+  group_by(Gender) %>% 
+  summarise(FACE_mean=mean(FACEsatis)) 
+```
+
+```{r}
+#Create column graph
+sept_gender_face %>% 
+  ggplot(aes(x=Gender,y=FACE_mean))+
+  geom_col(fill='darkgreen')+
+  theme_bw()+
+  expand_limits(y=40)+
+  labs(title='Mean Levels of Family Satisfaction by Gender',x='Gender',y='Family Satisifaction')+
+  theme(plot.title =element_text(hjust=.5))
+```
+
+## Inferential statistics (level 4)
+
+Test if there is an association between Compassionate Reverence and Family Satisfaction. Note any key statistics.
+```{r}
+test_cor=cor(sept_clean2$CFPSCompas,sept_clean2$FACEsatis)
+print(test_cor) #0.44
+```
+
+### Scatter Plot
+
+```{r}
+#Optional scatter plot, for fun
+sept_clean2 %>% 
+  ggplot(aes(y=FACEsatis,x=CFPSCompas))+
+  geom_point()+
+  geom_smooth(method='lm',se=F)+
+  theme_bw()+
+  labs(title='Family Satisfaction by Compassionate Reverance',x='Compassionate Reverance',y='Family Satisfaction')+
+  theme(plot.title = element_text(hjust=.5))
+```
+
+Test if there are any gender differences in mean levels of Family Satisfaction. Note any key statistics.
+
+```{r}
+#Run ANOVA
+anovatest=anova(lm(sept_clean2$FACEsatis~sept_clean2$Gender))
+
+print(anovatest) #p-value = 0.7905
+```
+

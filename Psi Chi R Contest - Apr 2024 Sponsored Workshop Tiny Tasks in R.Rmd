@@ -1,0 +1,124 @@
+---
+title: "Psi Chi R Sponsored Workshop: Tiny Tasks in R (APS 2024)"
+author: "Alan Lam"
+#date: "`r Sys.Date()`"
+date: "`r format(Sys.Date(), '%d %B %Y')`" 
+
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: false
+---
+
+[**Source**: Psi Chi APS 2024](https://osf.io/c7adr/)
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+## Load packages and import data
+```{r}
+library(tidyverse)
+
+dataset=read.csv('https://osf.io/download/pr4ws/')
+```
+
+## Check the data
+```{r}
+head(dataset)
+
+#skimr::skim(dataset)
+```
+
+## Preparing the data
+
+a.	Remove participants who are missing ‘Age’
+```{r}
+dataset1=dataset %>% 
+  filter(!is.na(Age))
+
+#sum(!complete.cases(dataset$Age))
+```
+
+b.	Remove participants who are missing ‘Gender’
+```{r}
+dataset2=dataset1 %>% 
+  filter(!is.na(Gender))
+
+#sum(!complete.cases(dataset1$Gender))
+```
+
+c.	Create the following variable ‘FACEenmesh’ which measures the extent to which a family is enmeshed, by summing the following items: FACES4, FACES10, FACES16,  FACES22, FACES28, FACES34, FACES40
+```{r}
+dataset3=dataset2 %>% 
+  mutate(FACEenmesh = FACES4 + FACES10 + FACES16 + FACES22 + FACES28 + FACES34 + FACES40) %>% 
+  select(FACEenmesh,everything())
+```
+
+d.	Identify participants with values considered outliers for ‘FACEenmesh’
+```{r}
+dataset3 %>% 
+  ggplot(aes(x=FACEenmesh))+
+  geom_boxplot()
+
+dataset3 %>% 
+  filter(!is.na(FACEenmesh)) %>% 
+  summarise(mean(FACEenmesh),
+            median(FACEenmesh),
+            min(FACEenmesh),
+            max(FACEenmesh),
+            sd(FACEenmesh))
+
+dataset3.5 = dataset3 %>% 
+  filter(!is.na(FACEenmesh),
+         FACEenmesh > 25)
+
+dataset3.5
+```
+
+e.	Remove participants with values considered outliers on ‘FACEenmesh’
+```{r}
+dataset4 = dataset3 %>% 
+  filter(!is.na(FACEenmesh),
+         FACEenmesh < 25)
+
+dataset4 %>% 
+  ggplot(aes(x=FACEenmesh))+
+  geom_boxplot()
+
+dataset4 %>% 
+  ggplot(aes(x=FACEenmesh))+
+  geom_density()
+
+```
+
+##	Descriptives
+
+a.	Find the mean of ‘FACEenmesh’
+b.	Find the standard deviation of ‘FACEenmesh’
+c.	Find the median of ‘FACEenmesh’
+d.	Find the range of ‘FACEenmesh’
+```{r}
+dataset4 %>% 
+  summarise(mean(FACEenmesh),
+            sd(FACEenmesh),
+            median(FACEenmesh),
+            min(FACEenmesh),
+            max(FACEenmesh),
+            range(FACEenmesh))
+```
+
+
+
+
+
+
+
+
+

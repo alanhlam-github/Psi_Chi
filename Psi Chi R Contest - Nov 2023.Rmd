@@ -1,0 +1,125 @@
+---
+title: 'Psi Chi R Contest - Nov 2023'
+author: 'By Alan Lam'
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: FALSE
+---
+
+[**Source**: Psi Chi R Contest](https://osf.io/cpg7v/)
+
+**Will reveal code after contest deadline.**
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+```{r}
+#Load packages and import data
+
+#install.packages(ggplot2,dplyr,lubridate,readr)
+
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(readr)
+
+november=read.csv('Nov_R_Data.csv')
+
+theme_set(theme_bw())
+```
+
+## Data processing (level 1)
+
+Write a script that will filter out participants who are missing values for the 'Hoursmom' and 'Hoursdad' variables
+
+```{r}
+november1=november %>% 
+  filter(!is.na(Hoursmom) & !is.na(Hoursdad))
+```
+
+Create a variable called 'PsyContM' by summing together the following variables: DyadM1+ DyadM2+ DyadM3+ DyadM4+ DyadM5+ DyadM6+ DyadM7
+
+```{r}
+november2=november1 %>% 
+  mutate(PsyContM= DyadM1 + DyadM2+ DyadM3+ DyadM4+ DyadM5+ DyadM6+ DyadM7)
+```
+
+Create a variable called 'PsyContF' by summing together the following variables: DyadF1+ DyadF2+ DyadF3+ DyadF4+ DyadF5+ DyadF6+ DyadF7
+
+```{r}
+november3=november2 %>% 
+  mutate(PsyContF=DyadF1+ DyadF2+ DyadF3+ DyadF4+ DyadF5+ DyadF6+ DyadF7)
+```
+
+## Descriptive Statistics (level 2)
+
+Calculate the mean, standard deviation, median, and range for PsyContM and PsyContF
+
+```{r}
+#Don't filter NAs out here; use na.rm=T instead
+
+#november3=november3 %>% filter(!is.na(PsyContM),!is.na(PsyContF))
+
+summary(november3$PsyContM,na.rm=T) 
+sd(november3$PsyContM,na.rm=T) 
+range(november3$PsyContM,na.rm=T)
+
+summary(november3$PsyContF,na.rm=T) 
+sd(november3$PsyContF,na.rm=T)
+range(november3$PsyContF,na.rm=T)
+```
+
+## Data visualization (level 3)
+
+Re-create the correlation matrix below:
+
+![](images/Untitled.png)
+
+```{r}
+#Create matrix for storage
+cor_matrix =matrix(0, nrow = 4, ncol = 4)
+
+#Enter data
+cor_matrix[1, 1] = 1
+cor_matrix[2, 1] = 0.7086156
+cor_matrix[3, 1] = -0.1849406
+cor_matrix[4, 1] = -0.1902252
+
+cor_matrix[1, 2] = 0.7086156
+cor_matrix[2, 2] = 1
+cor_matrix[3, 2] = -0.1535265
+cor_matrix[4, 2] = -0.1904273
+
+cor_matrix[1, 3] = -0.1849406
+cor_matrix[2, 3] = -0.1535265
+cor_matrix[3, 3] = 1
+cor_matrix[4, 3] = 0.5646881
+
+cor_matrix[1, 4] = -0.1902252
+cor_matrix[2, 4] = -0.1904273
+cor_matrix[3, 4] = 0.5646881
+cor_matrix[4, 4] = 1
+
+#Rename labels
+rownames(cor_matrix) = c('Hoursmom', 'Hoursdad', 'PsyContM', 'PsyContF')
+colnames(cor_matrix)= c('Hoursmom', 'Hoursdad', 'PsyContM', 'PsyContF')
+
+print(cor_matrix)
+```
+
+## Inferential statistics (level 4)
+
+Is there a significant correlation between PsyConF and Hoursdad? Note the R and P values
+
+```{r}
+
+cor.test(november3$PsyContF,november3$Hoursdad,method = 'pearson')
+```

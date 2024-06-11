@@ -1,0 +1,190 @@
+---
+title: "Psi Chi R Contest - Mar 2024"
+author: "Alan Lam"
+date: "2024-03-03"
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R Contest](https://osf.io/k6efc/)
+
+
+```{r setup,include=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+## Load packages
+```{r}
+#Load packages and import data
+
+library(ggplot2)
+library(dplyr)
+library(skimr)
+
+mar2024=read.csv('psichiR_mar2024.csv')
+```
+
+## Check data
+```{r}
+skimr::skim(mar2024)
+```
+
+
+## Level 1 
+-Let’s get familiar with our data. Create a table that shows how many times each genre is represented in the Top 50 most popular songs on Spotify. What is the most popular genre?
+
+- Create a table that shows how many times each genre is represented in the Top 50 most popular songs on Spotify. What is the most popular genre?
+```{r}
+mar2024 %>% 
+  group_by(main_genre) %>% 
+  summarise(Count=n()) %>% 
+  arrange(-Count) #Pop
+```
+
+-Which artist, if any, has the greatest number of Top 50 most popular songs on Spotify?
+```{r}
+mar2024 %>% 
+  group_by(artist_name) %>% 
+  summarise(Count=n()) %>% 
+  arrange(-Count) #The Weeknd
+```
+
+## Level 2
+-Provide the mean, standard deviation, median, and range of values for ‘danceability’
+```{r}
+summary(mar2024$danceability,na.rm=T)
+
+mean(mar2024$danceability,na.rm = T) 
+sd(mar2024$danceability,na.rm = T)
+median(mar2024$danceability,na.rm = T)
+range(mar2024$danceability,na.rm = T)
+```
+
+-Provide the mean, standard deviation, median, and range of values for ‘valence’
+```{r}
+summary(mar2024$valence,na.rm=T)
+
+mean(mar2024$valence,na.rm = T)
+sd(mar2024$valence,na.rm = T)
+median(mar2024$valence,na.rm = T)
+range(mar2024$valence,na.rm = T)
+
+#Mean: 0.51, standard deviation: 0.21, median: 0.51, range: 0.13 - 0.89
+```
+
+-Provide the mean, standard deviation, median, and range of values for ‘energy’
+```{r}
+summary(mar2024$energy,na.rm=T)
+
+mean(mar2024$energy,na.rm = T)
+sd(mar2024$energy,na.rm = T)
+median(mar2024$energy,na.rm = T)
+range(mar2024$energy,na.rm = T)
+
+#Mean: 0.66, standard deviation: 0.12, median: 0.12, range: 0.42 - 0.97
+```
+
+
+## Level 3
+-Does the ‘tempo’ variable meet the assumption of normality?
+
+```{r}
+shapiro.test(mar2024$tempo)
+
+hist(mar2024$tempo,freq=F,breaks = 15)
+lines(density(mar2024$tempo),col='red',lwd=2)#Yes, 'tempo' meets normality.
+
+```
+
+## Using ggplot to imitate base R
+```{r}
+mar2024 %>% 
+  ggplot(aes(x=tempo))+
+  geom_histogram(aes(y=..density..),bins = 15,col='black',fill='lightgray')+
+  geom_density(col='red',lwd=2)+
+  theme_classic()+
+  labs(title='Histogram of mar2024$tempo')+
+  theme(plot.title = element_text(hjust = .5))
+
+```
+
+-Produce a visual that will show if the ‘loudness’ variable contains any outliers.
+
+```{r}
+plot(mar2024$loudness)
+hist(mar2024$loudness)
+```
+
+-Is there a significant difference in the ratings of ‘danceability’ for explicit songs, compared to songs that are not explicit? Note all key statistics.
+
+## Create DFs
+```{r}
+explicit_dance=mar2024 %>% 
+  filter(is_explicit==TRUE)
+
+explicit.not_dance=mar2024 %>% 
+  filter(is_explicit==FALSE)
+```
+
+## Test for normality
+```{r}
+shapiro.test(explicit.not_dance$danceability)
+shapiro.test(explicit_dance$danceability) #p-val. below 0.05, so assume normality
+
+hist(explicit.not_dance$danceability,freq=F)
+lines(density(explicit.not_dance$danceability))
+
+hist(explicit_dance$danceability,freq=F)
+lines(density(explicit_dance$danceability))
+```
+
+## Run t-test
+```{r}
+t.test(explicit.not_dance$danceability,explicit_dance$danceability) #No, there is no significant difference between non-explicit and explicit for 'danceability.'
+
+```
+
+## Level 4
+-Create a regression model to figure out which of the following is the strongest predictor of popularity: danceability, valence, energy, loudness, acousticness. Instrumentalness, liveness, speechiness, or tempo. Please note all key statistics for each variable. 
+
+```{r}
+reg_model = lm(popularity ~ danceability + valence + energy + loudness + acousticness + instrumentalness + liveness + speechiness + tempo, data = mar2024)
+
+plot(reg_model)
+
+summary(reg_model) #Pr(>|t|) for danceability: 0.0761, valence: 0.4283, energy: 0.5354, loudness: 0.5659, acousticness: 0.1489, instrumentalness: 0.4737, liveness: 0.4424, speechiness: 0.4818, tempo: 0.8153 
+```
+--Didn't submit this part to the Psi Chi contest
+
+## Plots for Model
+```{r}
+library(purrr)
+library(ggplot2)
+
+#Create list of variables to plot
+plot_list = c('danceability','valence','energy','loudness','acousticness','instrumentalness','liveness','speechiness','tempo')
+
+# Function create plots for each variable
+plot_map = function(some_x) {
+  ggplot(mar2024,aes(x = !!sym(some_x), y = popularity))+
+    geom_point(aes(color = popularity), alpha = 0.5)+
+    labs(title = paste0("Popularity and ", some_x), x = some_x, y = "Popularity")+
+    geom_smooth(method = lm, se = FALSE)+
+    theme_bw()+
+    theme(plot.title = element_text(hjust = .5))
+}
+
+# list,function
+map(plot_list, plot_map)
+
+```
+
+

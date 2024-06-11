@@ -1,0 +1,135 @@
+---
+title: "Psi Chi R Contest - Oct 2023"
+author: "By Alan Lam"
+output:
+  html_document:
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: FALSE
+---
+[**Source**: Psi Chi R Contest](https://osf.io/2ac4b/wiki/home/)
+
+**Code will be revealed after the submission deadline.**
+
+```{r setup,include=F,echo=F}
+knitr::opts_chunk$set(message=F,warning=F,echo = T)
+```
+
+```{r}
+#Load packages and import data
+
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(readr)
+
+october=read.csv('october_psichiR_movies.csv')
+```
+
+
+## Data processing (level 1)
+
+1.    Write a script that will filter out movies that are missing a value in the ‘Budget’ column.
+
+```{r}
+octBudget=october %>% 
+  subset(!is.na(Budget))
+
+```
+
+2.    Write a script that will filter out movies that are missing a value in the ‘RunTime’ column.
+
+```{r}
+octRunTimeNA =octBudget%>% 
+  subset(!is.na(RunTime))
+```
+
+## Descriptive Statistics (level 2)
+
+3.    Write a script that will provide the average, standard deviation, median, and range of the ‘RunTime’ variable. Note the values you got.
+
+```{r}
+oct_descriptive= summary(octRunTimeNA$RunTime)
+
+print(oct_descriptive)
+sd(oct_descriptive)
+range(oct_descriptive)
+
+#Mean = 90.3, STD = 40.84176, Median = 90, Range = 45 to 170
+```
+
+4.    Write a script that will provide the average, standard deviation, median, and range of the ‘Budget’ variable. Note the values you got.
+
+```{r}
+oct_budget_description= summary(octRunTimeNA$Budget)
+
+print(oct_budget_description)
+sd(oct_budget_description)
+range(oct_budget_description)
+
+#Mean = 3828124, STD = 28022369, Median = 500000, Range = 100 to 70000000
+```
+
+5.    Write a script that will provide the average, standard deviation, median, and range of the ‘Review’ variable. Note the values you got from running the code.
+
+```{r}
+oct_review_description = summary(octRunTimeNA$Review)
+
+print(oct_review_description)
+sd(oct_review_description)
+range(oct_review_description)
+
+#Mean = 4.955, STD = 6.200773, Median = 4.9, Range = 1 - 20
+```
+
+## Data visualization (level 3)
+
+6.    Create a graph that shows the ‘Budget’ for the movies in the dataset over time.
+
+```{r}
+#Transform dates
+
+octRunTimeNA$Date=mdy(octRunTimeNA$Release_Date)
+
+octRunTimeNA=octRunTimeNA %>% 
+  select(Release_Date,Date,everything())
+
+range(octRunTimeNA$Date) #Shows 1905 to 2017
+```
+
+```{r}
+octRunTimeNA %>% 
+  ggplot(aes(y=Budget,x=Date))+
+  geom_line(col='darkgreen')+
+  geom_point()+
+  labs(title='Movie Budget Over the Years',subtitle="From 1905 to 2017",y=' ',x='Years')+
+  theme_bw()+
+  theme(plot.title = element_text(hjust=.5),plot.subtitle = element_text(hjust=.5))+
+  scale_y_continuous(labels=scales::dollar_format())+
+  expand_limits(y=80000000)
+```
+
+## Inferential statistics (level 4)
+
+7.    Test if there are any associations between the following variables: ‘Review’, ‘Budget’, and ‘RunTime’. Note the key statistics you got from running the code.
+
+```{r}
+shapiro.test(octRunTimeNA$Review)
+shapiro.test(octRunTimeNA$Budget)
+shapiro.test(octRunTimeNA$RunTime)
+
+cor.test(octRunTimeNA$Review,octRunTimeNA$Budget,method='spearman')
+#p-value = 0.5632, rho 0.02132607 
+
+cor.test(octRunTimeNA$Review,octRunTimeNA$RunTime,method='spearman')
+#p-value = 0.00000006181, rho 0.1977713 
+
+cor.test(octRunTimeNA$Budget,octRunTimeNA$RunTime,method='spearman')
+#p-value < 2.2e-16, rho 0.3279512 
+
+```
