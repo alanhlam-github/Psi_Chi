@@ -33,15 +33,15 @@ dataset=read.csv('https://osf.io/download/c3bfs/')
 ```{r}
 head(dataset)
 
-#skimr::skim(dataset)
+skimr::skim(dataset)
 ```
 
 ```{r}
-sum(is.na(dataset))
-
-sum(is.null(dataset))
-
-sum(!complete.cases(dataset))
+# sum(is.na(dataset))
+# 
+# sum(is.null(dataset))
+# 
+# sum(!complete.cases(dataset))
 ```
 
 ## Level 1
@@ -50,6 +50,7 @@ Let’s get familiar with our data. Create a table that shows the frequency of e
 
 ```{r}
 tab1 = dataset %>% 
+  filter(complete.cases(type1)) %>% 
   group_by(type1) %>% 
   count() %>% 
   arrange(desc(n))
@@ -60,6 +61,7 @@ tab1
 Next, let’s look at the representation of each generation of Pokémon in the dataset. Create a table that shows the number of Pokémon in the dataset associated with each generation (variable name: generation)
 ```{r}
 tab2 = dataset %>% 
+  filter(complete.cases(generation)) %>% 
   group_by(generation) %>% 
   count() %>% 
   arrange(desc(n))
@@ -74,18 +76,23 @@ Provide the mean, standard deviation, median, and range of values of attack stat
 
 ```{r}
 water_attack = dataset %>% 
-  filter(type1 == 'Water') %>% 
+  filter(type1 == 'Water',
+         complete.cases(type1)) %>% 
   select(attack)
 
 #create function for desc stats
 desc_stat = function(x){
-  list(mean = mean(x,na.rm = T),
+  c(mean = mean(x,na.rm = T),
   standard_dev = sd(x,na.rm = T),
   median = median(x,na.rm = T),
   range = range(x,na.rm = T))
 }
 
 map(water_attack,desc_stat)
+#mean: 72.34
+#std: 25.26
+#median: 70
+#range: 10 to 130
   
 ```
 
@@ -93,11 +100,15 @@ map(water_attack,desc_stat)
 
 ```{r}
 dragon_speed = dataset %>% 
-  filter(type1 == 'Dragon') %>% 
+  filter(type1 == 'Dragon',
+         complete.cases(type1)) %>% 
   select(speed)
 
 map(dragon_speed,desc_stat)
-
+#mean: 80.19
+#std: 24.62
+#median: 82
+#range: 40 to 142
 
 ```
 
@@ -109,34 +120,61 @@ library(ggplot2)
 
 boxplot(dataset$total)
 
-dataset %>% 
-  ggplot(aes(x=total))+
-  geom_bar()
+outlier_lower = dataset %>% 
+  select(name,total) %>% 
+  arrange(total)
 
+outlier_upper = dataset %>% 
+  select(name,total) %>% 
+  arrange(desc(total))
+
+#Wishwashi with a total of 175 is the lower outlier and Arceus with a total of 720 is the upper outlier.
 ```
 
 ##Level 4-
 
-Is there a correlation between a Pokémon’s ‘total’ stat and their base level of experience? (variable: base_exp)-Create a visualization that shows the average ‘total’ stat based on the primary type of the Pokémon (type1)
+Is there a correlation between a Pokémon’s ‘total’ stat and their base level of experience? (variable: base_exp)
+
 
 ```{r}
 dataset2=dataset %>% 
+  filter(complete.cases(base_exp),
+         complete.cases(total)) %>% 
   mutate(base_exp2=as.numeric(base_exp)) %>% 
-  filter(complete.cases(base_exp2))
+  filter(!is.na(base_exp2),
+         !is.na(total)) %>% 
+  select(base_exp,base_exp2,total,everything())
 
-cor.test(dataset2$total,dataset2$base_exp2)
+#violates normality
+shapiro.test(dataset2$base_exp2)
+hist(dataset2$base_exp2)
+
+# p-value < 2.2e-16, sample estimates: tau 0.9132707 
+cor.test(dataset2$total,dataset2$base_exp2,method = 'kendall')
 
 ```
 
+
+-Create a visualization that shows the average ‘total’ stat based on the primary type of the Pokémon (type1)
 ```{r}
-cor_data = dataset2[,c(18,30)] %>% 
-  tibble()
+dataset3 = dataset2 %>% 
+  group_by('Pokemon Primary Type' =type1) %>% 
+  summarise('Average of Total Stat'=round(mean(total),2)) %>% 
+  arrange(desc(`Average of Total Stat`))
 
-cor_matrix= cor_data %>% 
-  cor() %>% 
-  round(digits = 2) %>% 
-  as.data.frame()
+dataset3
+```
 
-plot(cor_data)
+```{r}
+dataset3 %>% 
+  ggplot(aes(y=`Pokemon Primary Type`,x=`Average of Total Stat`,fill=`Average of Total Stat`))+
+  geom_col()+
+  labs(x='Total Stat Average',y='Primary Type',
+       title='A Bar Chart Brawl of Pokemon Power',
+       subtitle='A look at Primary Types and their Average Total Stats',
+       fill=' ')+
+  theme_bw()+
+  theme(plot.title = element_text(hjust=.5),
+        plot.subtitle = element_text(hjust = .5))
 ```
 
