@@ -1,10 +1,11 @@
 ---
 title: "Psi Chi R - June 2024"
-author: "Alan Lam"
+author: "by Alan Lam"
 #date: "`r Sys.Date()`"
-date: "`r format(Sys.Date(), '%d %B %Y')`" 
+date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
 output:
   html_document:
+    theme: readable
     always_allow_html: yes
     df_print: kable
     toc: yes
@@ -19,11 +20,13 @@ output:
 
 ## Load packages and import data
 
-```{r}
+```{r setup, warning=F,message=F}
+knitr::opts_chunk$set(echo = TRUE,warning=F)
 #library(tidyverse)
 
 library(dplyr)
 library(purrr)
+library(ggplot2)
 
 dataset=read.csv('https://osf.io/download/c3bfs/')
 ```
@@ -44,7 +47,7 @@ skimr::skim(dataset)
 # sum(!complete.cases(dataset))
 ```
 
-## Level 1
+## Level 1-
 
 Let’s get familiar with our data. Create a table that shows the frequency of each type of Pokémon in the dataset (variable name: type1). 
 
@@ -88,11 +91,12 @@ desc_stat = function(x){
   range = range(x,na.rm = T))
 }
 
-map(water_attack,desc_stat)
 #mean: 72.34
 #std: 25.26
 #median: 70
 #range: 10 to 130
+map(water_attack,desc_stat)
+
   
 ```
 
@@ -104,11 +108,12 @@ dragon_speed = dataset %>%
          complete.cases(type1)) %>% 
   select(speed)
 
-map(dragon_speed,desc_stat)
+
 #mean: 80.19
 #std: 24.62
 #median: 82
 #range: 40 to 142
+map(dragon_speed,desc_stat)
 
 ```
 
@@ -127,6 +132,10 @@ outlier_lower = dataset %>%
 outlier_upper = dataset %>% 
   select(name,total) %>% 
   arrange(desc(total))
+
+head(outlier_lower)
+
+head(outlier_upper)
 
 #Wishwashi with a total of 175 is the lower outlier and Arceus with a total of 720 is the upper outlier.
 ```
@@ -171,7 +180,7 @@ dataset3 %>%
   geom_col()+
   labs(x='Total Stat Average',y='Primary Type',
        title='A Bar Chart Brawl of Pokemon Power',
-       subtitle='A look at Primary Types and their Average Total Stats',
+       subtitle='Examining Primary Types and their Average Total Stats',
        fill=' ')+
   theme_bw()+
   theme(plot.title = element_text(hjust=.5),

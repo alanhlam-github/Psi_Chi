@@ -1,0 +1,112 @@
+---
+title: "Psi Chi R - July 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: kable
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R](https://osf.io/4pbuc/)
+
+## Load packages and import data
+
+```{r setup, warning=F,message=F}
+knitr::opts_chunk$set(echo = TRUE,warning=F)
+#library(tidyverse)
+
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+dataset=read.csv('https://osf.io/download/xq8us/')
+```
+
+```{r}
+skimr::skim(dataset)
+```
+
+Level 1 -Let’s get familiar with our data. Create a table that shows the frequency of each Country in the dataset. 
+
+```{r}
+tab1 =dataset %>% 
+  group_by(Country_Name) %>% 
+  summarise(Frequency=n())
+
+print(tab1)
+```
+
+Level 2-Next, let’s look at the representation of each country’s medal status. Create atable that shows the number of times each country has won a bronze, silver, and gold medal.
+
+```{r}
+tab2=dataset %>% 
+  group_by(Country_Name) %>% 
+  summarise(Gold = sum(Gold), Silver = sum(Silver), Bronze = sum(Bronze))
+
+print(tab2)
+```
+
+
+Level 3-Is there a difference in the number of silver medals a country earns if they are competing in their home country? *Note please pick any one country you’d like to look at
+
+
+```{r}
+home=dataset %>% 
+  filter(Host_country=='United States') %>% 
+  group_by(Country_Name) %>% 
+  summarise(Silver = sum(Silver)) %>% 
+  mutate(Percent_Win = round(Silver/sum(Silver),3))
+
+away =dataset %>%
+  filter(!Host_country=='United States') %>% 
+  group_by(Country_Name) %>% 
+  summarise(Silver = sum(Silver)) %>% 
+  mutate(Percent_Win = round(Silver/sum(Silver),3))
+```
+
+```{r}
+shapiro.test(home$Silver)
+shapiro.test(away$Silver)
+
+hist(home$Silver)
+hist(away$Silver)
+```
+
+```{r}
+wilcox1=wilcox.test(home$Silver,away$Silver)
+
+#yes, there's a difference in the number of silver medals a country earns if they are competing in their home country
+print(wilcox1)
+```
+
+Level 4-Create a visualization that shows the United State’s gold medal over time. 
+```{r}
+USA_visual = dataset %>% 
+  filter(Country_Name == 'United States')
+
+USA_visual %>% 
+  ggplot(aes(x=Year,y=Gold))+
+  geom_line(lwd=.7,col='darkred')+
+  theme_bw()+
+  labs(y='Number of Gold Medals',
+       x= 'Years',
+       title = 'The Rise and Fall of the American Quest for Gold',
+       subtitle = "Examining the trajectory of the fight for the ultimate prize",fill=' ')+
+  theme(plot.title = element_text(hjust = .5),
+        plot.subtitle = element_text(hjust = .5))
+```
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```
