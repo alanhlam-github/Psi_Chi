@@ -2,7 +2,7 @@
 title: "Psi Chi R - June 2024"
 author: "by Alan Lam"
 #date: "`r Sys.Date()`"
-date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+date: "Date: 27 June 2024; Updated: `r format(Sys.Date(), '%d %B %Y')`" 
 output:
   html_document:
     theme: readable
