@@ -1,0 +1,98 @@
+---
+title: "Psi Chi R - August 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: kable
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+[**Source**: Psi Chi R](https://osf.io/hmbxs/wiki/home/)
+
+Happy August! This month we are using data from the Psi Chi NICE project: Understanding Family Dynamics in a Cross-Cultural Sample. The manuscript for this project, which was the first ever NICE project, was recently published.
+
+You may access the prompts here. The data is available here.
+
+The contest opens August 1 and closes (latest time zone on earth) August 31st 2024. The contest entry form is available here.
+
+After the close of the contest, an answer key will be uploaded - please note that there are often multiple ways to arrive at the correct answer.
+
+Please contact RAC member Dr. Kelly Cuccolo, kcuccolo@mivu.org with any questions. Note that Dr. Cuccolo will be on vacation and unreachable from August 5th to the 13th.
+
+## Load packages and import data
+
+```{r setup, warning=F,message=F}
+#library(tidyverse)
+
+library(dplyr)
+#library(purrr)
+library(ggplot2)
+
+dataset=read.csv('https://osf.io/download/j58c7')
+
+```
+
+```{r}
+#skimr::skim(dataset)
+```
+
+Codebook: https://osf.io/ey7ph
+
+## Data processing (level 1)
+Filter out participants who have progress values less than 100
+```{r}
+dataset1 = dataset %>% 
+  filter(Progress < 100)
+```
+
+Filter out participants who are missing values for age and for gender. 
+
+```{r}
+dataset2 = dataset1 %>% 
+  filter(!is.na(Age),
+         !is.na(Gender))
+```
+
+## Descriptive Statistics (level 2)
+Create a variable called FACEcomm (Family Communication) by adding together the following items FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52
+
+oNote the average, standard deviation, and median values for the FACEcomm variable. 
+```{r}
+dataset3=dataset2 %>% 
+  mutate(FACEcomm = FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52) %>% 
+  select(FACEcomm,everything())
+```
+
+Find the range as well.
+
+## Data visualization (level 3)
+Create a box plot of the FACEcomm variable to identify any outliers
+
+Create a histogram on the FACEcomm variable to help visualize the distribution 
+
+## Inferential statistics (level 4)
+
+If you identified outliers in the previous step, filter them out from the data.
+
+Is there a significant difference in FACEcomm between people who identify with ‘Religionnow’ = 1 and ‘Religionnow’ = 11?
+
+```{r}
+
+```
+
+
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```
