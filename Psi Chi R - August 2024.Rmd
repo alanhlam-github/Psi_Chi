@@ -2,7 +2,7 @@
 title: "Psi Chi R - August 2024"
 author: "by Alan Lam"
 #date: "`r Sys.Date()`"
-date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
 output:
   html_document:
     theme: readable
@@ -15,6 +15,9 @@ output:
     code_folding: hide
     code_download: true
 ---
+Start Date: August 5, 2024
+
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
 
 [**Source**: Psi Chi R](https://osf.io/hmbxs/wiki/home/)
 
@@ -52,6 +55,8 @@ Codebook: https://osf.io/ey7ph
 ```{r}
 dataset1 = dataset %>% 
   filter(Progress < 100)
+
+slice_sample(dataset1,n=5)
 ```
 
 Filter out participants who are missing values for age and for gender. 
@@ -60,33 +65,98 @@ dataset1 = dataset %>%
 dataset2 = dataset1 %>% 
   filter(!is.na(Age),
          !is.na(Gender))
+
+slice_sample(dataset2,n=5)
 ```
 
 ## Descriptive Statistics (level 2)
 Create a variable called FACEcomm (Family Communication) by adding together the following items FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52
 
-oNote the average, standard deviation, and median values for the FACEcomm variable. 
 ```{r}
 dataset3=dataset2 %>% 
   mutate(FACEcomm = FACES43 + FACES44 + FACES45 + FACES46 + FACES47 + FACES48 + FACES49 + FACES50 + FACES51 + FACES52) %>% 
   select(FACEcomm,everything())
+
+skimr::skim(dataset3$FACEcomm)
 ```
 
-Find the range as well.
+-Note the average, standard deviation, and median values for the FACEcomm variable. Find the range as well.
+```{r}
+desc_stat = function(x){
+  c(mean = mean(x,na.rm = T),
+  standard_dev = sd(x,na.rm = T),
+  median = median(x,na.rm = T),
+  range = range(x,na.rm = T))
+}
+
+desc_stat(dataset3$FACEcomm)
+#mean:37.31, SD: 5.67, median: 38, range: 26 to 50
+```
 
 ## Data visualization (level 3)
 Create a box plot of the FACEcomm variable to identify any outliers
 
+```{r}
+dataset4=dataset3 %>% 
+  filter(!is.na(FACEcomm))
+
+boxplot(dataset4$FACEcomm)
+
+dataset4 %>% 
+  ggplot(aes(y=FACEcomm))+
+  geom_boxplot()
+```
+
 Create a histogram on the FACEcomm variable to help visualize the distribution 
+
+```{r}
+hist(dataset4$FACEcomm)
+
+dataset4 %>% 
+  ggplot(aes(x=FACEcomm))+
+  geom_histogram(binwidth = 5)
+
+dataset4 %>% 
+  ggplot(aes(x=FACEcomm))+
+  geom_density()
+
+```
+
 
 ## Inferential statistics (level 4)
 
 If you identified outliers in the previous step, filter them out from the data.
+```{r}
+dataset5=dataset4 %>% 
+  filter(FACEcomm >= 33,
+         FACEcomm <= 40)
+
+slice_sample(dataset4,n=5)
+```
 
 Is there a significant difference in FACEcomm between people who identify with ‘Religionnow’ = 1 and ‘Religionnow’ = 11?
 
 ```{r}
+religion_1=dataset5 %>% 
+  filter(Religionnow=='1') %>% 
+  select(Religionnow,everything())
 
+religion_11=dataset5 %>% 
+  filter(Religionnow=='11') %>% 
+  select(Religionnow,everything())
+
+shapiro.test(religion_1$FACEcomm)
+
+shapiro.test(religion_11$FACEcomm)
+
+hist(religion_1$FACEcomm)
+
+hist(religion_11$FACEcomm)
+```
+
+```{r}
+#no significant difference
+t.test(religion_1$FACEcomm,religion_11$FACEcomm)
 ```
 
 
