@@ -23,21 +23,19 @@ Report Date: `r format(Sys.Date(), '%d %B %Y')`
 
 Happy August! This month we are using data from the Psi Chi NICE project: Understanding Family Dynamics in a Cross-Cultural Sample. The manuscript for this project, which was the first ever NICE project, was recently published.
 
-You may access the prompts here. The data is available here.
-
 The contest opens August 1 and closes (latest time zone on earth) August 31st 2024. The contest entry form is available here.
 
 After the close of the contest, an answer key will be uploaded - please note that there are often multiple ways to arrive at the correct answer.
 
-Please contact RAC member Dr. Kelly Cuccolo, kcuccolo@mivu.org with any questions. Note that Dr. Cuccolo will be on vacation and unreachable from August 5th to the 13th.
+Codebook: https://osf.io/ey7ph
 
 ## Load packages and import data
 
 ```{r setup, warning=F,message=F}
 #library(tidyverse)
+#library(purr)
 
 library(dplyr)
-#library(purrr)
 library(ggplot2)
 
 dataset=read.csv('https://osf.io/download/j58c7')
@@ -45,10 +43,9 @@ dataset=read.csv('https://osf.io/download/j58c7')
 ```
 
 ```{r}
-#skimr::skim(dataset)
+skimr::skim(dataset)
 ```
 
-Codebook: https://osf.io/ey7ph
 
 ## Data processing (level 1)
 Filter out participants who have progress values less than 100
