@@ -1,0 +1,98 @@
+---
+title: "Psi Chi R - September 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: kable
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+Start Date: August 30, 2024
+
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
+
+[**Source**: Psi Chi R](https://osf.io/3zm8w/)
+
+According to the National Day Calendar, National Coffee Day is September 29th(plus, with back to school in full swing, it seems appropriate)! This contest won’t keep you working late, we’ll keep it short and sweet (like espresso).
+
+```{r setup, warning=F,message=F}
+#library(tidyverse)
+#library(purr)
+
+library(dplyr)
+library(ggplot2)
+
+data = read.csv('https://osf.io/download/jma8e/')
+```
+
+## EDA
+```{r}
+#skimer=skimr::skim(data)
+
+data1=data %>% 
+  mutate(across(roast, ~ if_else(. == "", "N/A", .)))
+```
+
+## Data processing (level 1)
+
+```{r}
+#-Create a table that shows how many times each type of roast is represented in the data set.
+
+table1_roast=data %>% 
+  filter(complete.cases(roast)) %>% 
+  mutate(across(roast, ~ if_else(. == "", "N/A", .))) %>% 
+  group_by(roast) %>% 
+  count() %>% 
+  arrange(-n)
+
+print(table1_roast)
+```
+
+```{r}
+# -Create a table that shows how many times each roaster is represented in the data set.
+library(stringr)
+
+table2_roaster=data1 %>% 
+  filter(complete.cases(roaster)) %>% 
+  mutate(roaster = case_when(str_detect(roaster,"Simon Hsieh") ~ "Simon Hsieh", TRUE~roaster))%>%
+  group_by(roaster) %>% 
+  count() %>% 
+  arrange(-n)
+
+print(table2_roaster)
+```
+
+
+## Descriptive Statistics (level 2)
+
+ What is the cost of the least and most expensive coffee?-What is the average rating of the coffee reviewed in the dataset? What is the most received rating?
+```{r}
+#-What is the average cost (USD) for 100 grams of coffee reviewed in the data set?
+data1 %>% 
+  summarise(Average_Cost = mean(X100g_USD))
+# Average cost is $9.32 for 100 grams of coffee
+```
+
+## Data visualization (level 3) -Create a table that shows the roast type and average ratings based on the roaster.-Create a graph that shows the cost (USD) for 100 grams of coffee based on the bean origin (origin 1)
+
+## Inferential statistics (level 4)-Is there a significant difference in the rating between roasts? If so, which one(s)?
+
+```{r}
+
+```
+
+
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```
