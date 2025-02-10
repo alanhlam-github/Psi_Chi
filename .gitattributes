@@ -5,3 +5,7 @@
 *.Rmd linguist-detectable=true
 *.Rmd linguist-language=r
 *.Rmd text
+
+*.html linguist-detectable=false
+*.html linguist-language=html
+*.html text
