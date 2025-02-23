@@ -1,0 +1,122 @@
+---
+title: "Psi Chi R - December 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+Start Date: 7 Dec 2024
+
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
+
+[**Source**: Psi Chi R](https://osf.io/ebkcj/)
+
+Welcome to the contest for December! The prompts can be found here, and the data is available here. The contest will run until the last day of December (December 31st), latest time zone on earth.
+
+```{r setup, warning=F,message=F}
+knitr::opts_chunk$set(echo = T,message = F,warning = F)
+
+setwd("C:/Users/alanh/Documents/R/Psi_Chi_R")
+
+library(tidyverse)
+
+data=read_csv('data.csv')
+
+#access CSV directly through URL; local copy will be overwritten with a different month's data
+
+#data= read.csv('https://osf.io/download/7uc9x/')
+```
+
+## Skim and clean
+```{r}
+## EDA
+
+names(data) = make.names(colnames(data))
+
+SmartEDA::ExpData(data,type=2)
+
+```
+
+
+## Level 1: 
+Write a script that will remove participants who are missing the ‘age’ variable. Then, write a script that will show the distribution of the ‘rating’ variable. Is ‘Review Rating’ skewed?
+
+```{r}
+data1 = data %>% 
+  filter(!is.na(Age))
+
+hist(data1$Review.Rating)
+boxplot(data1$Review.Rating)
+shapiro.test(data1$Review.Rating)
+
+#yes, Review Rating is skewed.
+```
+
+## Level 2: 
+Find the min, median, max, average, and standard deviation of ‘Review Rating’
+
+```{r}
+desc_stats = function(x) {
+            c(min = min(x,na.rm = T),
+              median = median(x,na.rm=T),
+              max = max(x,na.rm = T),
+              average = mean(x,na.rm=T),
+              standard_dev = sd(x,na.rm=T))
+}
+
+print(desc_stats(data1$Review.Rating))
+```
+
+## Level 3: 
+Create a table that shows the average ‘Review Rating’ for each ‘Category.'
+
+```{r}
+review_rating_table = data1 %>% 
+  group_by(Category) %>% 
+  summarise(Average_Review_Rating = mean(Review.Rating,na.rm = T))
+
+print(review_rating_table)
+```
+
+## Level 4: 
+Create a visualization showing the relationship between ‘Purchase Amount (USD)’ and ‘Review Rating.’ 
+
+```{r}
+
+data1 %>% 
+  ggplot(aes(x=Review.Rating,y=Purchase.Amount..USD.))+
+  geom_point()+
+  geom_smooth(method = "lm", se = T) 
+
+
+```
+
+Test the correlation between the variables. What is the rvalue? What is the p value?
+```{r}
+shapiro.test(data1$Purchase.Amount..USD.)
+
+shapiro.test(data1$Review.Rating)
+
+cor.test(data1$Purchase.Amount..USD.,data1$Review.Rating,method = 'spearman')
+#p-value = 0.06224 and rho = 0.02994088
+```
+
+
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```
+

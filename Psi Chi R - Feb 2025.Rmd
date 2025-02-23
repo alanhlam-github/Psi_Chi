@@ -1,0 +1,142 @@
+---
+title: "Psi Chi R - Feb 2025"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+
+https://osf.io/by4hr/wiki/home/
+
+```{r warning=F,message=F}
+knitr::opts_chunk$set(echo = T,message = F,warning = F)
+
+#setwd("C:/Users/alanh/Documents/R/Psi_Chi_R")
+
+rm(list=ls())
+
+setwd("~/R/Psi_Chi_R")
+
+library(tidyverse)
+
+data=read_csv('data.csv')
+
+##total for bottom row
+sum_rows = function(x) {
+  x = as.data.frame(x) # Ensure x is a data frame
+  sums = sapply(x,function(col) if (is.numeric(col)) sum(col, na.rm = T) else NA)
+  sums = as.data.frame(t(sums)) # Convert to data frame
+  names(sums) = names(x) # Retain column names
+  rbind(x, sums) # Bind the sum row to the original data frame
+}
+
+## right column for total
+sum_cols = function(x) {
+  x$Total = rowSums(x[sapply(x, is.numeric)], na.rm = T)
+  x
+}
+
+#dollar format function; copy/paste up top for easy reference
+dollars = function(x) {
+  paste0("$",format(x,big.mark= ",",scientific=F))
+}
+```
+
+## Clean and EDA
+```{r}
+names(data) = make.names(colnames(data))
+
+SmartEDA::ExpData(data,type=2)
+```
+
+# Your tasks for the PsiChiR contest for Feb. 2025 include:
+
+## Level 1: Remove participants outside of the United States AND participants who are not identified as "white" (white participants are coded as "1" for the variable "Race").
+
+```{r}
+data1 = data %>% 
+  filter(VGeoCountry == 'United States',
+         Race == '1') %>% 
+  tibble()
+```
+
+
+## Level 2: For the remaining participants, calculate the percentage of participants who fell into each income category (1 through 5).
+
+```{r}
+data1 %>% 
+  mutate(Income = as.character(Income)) %>% 
+  group_by(Income) %>% 
+  summarise(headcount = n()) %>% 
+  mutate(percent = headcount/sum(headcount,na.rm = T) * 100) %>% 
+  arrange(percent) %>% 
+  sum_rows() %>% 
+  mutate(percent = paste(round(percent,2),"%"))
+```
+
+## Level 3: Create a graph (such as a bar graph) that displays the M and SD for "General Support for Affirmative Action" (variable = "AA") across income groups.
+
+
+```{r}
+data1.5 = data1 %>% 
+  group_by(Income) %>% 
+  summarise(Mean = mean(AA,na.rm = T),
+            Median = median(AA,na.rm=T),
+            SD = sd(AA,na.rm=T))
+
+data1.5 %>% 
+  ggplot(aes(x=Income))+
+  geom_bar()+
+  facet_wrap(~Median~SD)
+```
+
+## Level 4: Test whether "General Support for Affirmative Action" (variable = "AA") differs across income group.
+
+Affirmative Action & Income: Turns out, Money Does Talk (and So Do Averages). (Slightly cynical, winking at the obvious)
+Support for Affirmative Action: Less About Principle, More About Paycheck? (Just Kidding... Mostly.) (Self-deprecating humor, hints at a deeper point)
+Income Levels and Affirmative Action Support: The Numbers Don't Lie (Unless They're Lying About Lying). (Meta-humor, questioning the data itself)
+Affirmative Action: Does Your Wallet Dictate Your Stance? Let's Find Out! (Spoiler: Probably.) (Bold statement, plays with expectations)
+From Rags to Riches (and Affirmative Action Opinions): A Statistical Journey. (Overly dramatic, like a movie trailer)
+Affirmative Action Support: The Rich vs. The Not-So-Rich (Averages and Standard Deviations Throwing Shade). (Uses slang, playful antagonism)
+Affirmative Action: Because Everyone Deserves a Fair Shot (Unless They're Already Winning). (Sarcastic, addresses a potential counter-argument)
+Income and Affirmative Action: A Love Story Told Through the Cold, Hard Logic of Statistics. (Irony, juxtaposing romance with data)
+Affirmative Action Support: The More You Make, The... Well, You'll See. (Data Spoilers Ahead!) (Teasing, encourages the audience to look at the chart)
+
+```{r}
+data1 %>% 
+  ggplot(aes(x=Income,y=AA))+
+  geom_col(fill='darkgreen')+
+  theme_bw()+
+  labs(x='Income Group',y='Affirmative Action',title="Affirmative Action Support: The More You Make, The More... Well, You'll See.")+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+```{r}
+t.test(data1$Income,data1$AA)
+```
+
+
+In order to complete each level, you need to complete all levels before (so in order to complete level 4, you also need to do 1, 2, and 3 correctly).
+
+Data is from this study (Lee & Outton, 2020)
+
+Dataset can be accessed here
+
+Submit your entry here
+
+
+```{r include=F}
+#beep when done
+if (require("beepr"))
+  beepr::beep(2)
+```

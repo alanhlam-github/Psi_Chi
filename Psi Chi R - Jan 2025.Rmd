@@ -1,0 +1,117 @@
+---
+title: "Psi Chi R - Jan 2025"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+
+Hello! Welcome to January's contest. In honor of National Cheese Day (January 20th) we'll be looking into some award winning cheeses! This month, we'll also test out learning a new skill (for you, and ME!) - making maps! One of the tasks for this month will be to map out winning cheeses. Please note, this is one of my first attempts at making maps in R so it is not by any means fancy, but, I feel it is important for all of us to try learning new things :)
+
+https://osf.io/2hgzs/wiki/home/
+
+```{r warning=F,message=F}
+knitr::opts_chunk$set(echo = T,message = F,warning = F)
+
+#setwd("C:/Users/alanh/Documents/R/Psi_Chi_R")
+
+setwd("~/R/Psi_Chi_R")
+
+library(tidyverse)
+
+data=read_csv('data.csv')
+
+sum_rows = function(x){
+  x %>% 
+    ungroup() %>% 
+    bind_rows(summarise(.,across(where(is.numeric),sum,na.rm=T)))
+}
+
+sum_cols = function(x){
+  x %>% 
+    mutate(Total = rowSums(across(where(is.numeric)), na.rm =T))
+}
+
+```
+
+## #EDA
+```{r}
+names(data) = make.names(colnames(data))
+
+SmartEDA::ExpData(data,type=2)
+```
+
+## Level 1.
+
+Remove any rows where ‘company,’ ‘product_name,’ and/or ‘rating’ are blank.
+
+```{r}
+data1 = data %>% 
+  filter(!is.na(company),
+         !is.na(product_name),
+         !is.na(rating))
+```
+
+
+## Level 2.
+
+Make one table that shows the counts of each category within ‘rating,’ and then make a second table showing counts for each ‘country.’
+
+```{r}
+data1 %>% 
+  group_by(rating) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+data1 %>% 
+  group_by(country) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+## Level 3.
+First, make a table showing how many of each medal type (rating) each cheese (Category_Corrected).
+
+```{r}
+data1 %>% 
+  group_by(rating,Category.Corrected)
+```
+
+Which cheese has the most “Super Golds?” Next, modify the table and indicate which country produced the most “Super Gold” cheeses.
+
+5004 - Hard goats' milk cheese plain
+Spain
+```{r}
+data1 %>% 
+  group_by(Category.Corrected,rating,country) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  filter(rating=='SUPER GOLD')
+```
+
+## Level 4.
+Generate a map that shows which countries have won super gold medals. Since this is a more advanced skill, I’ve provided a starter code below
+```{r}
+data1 %>% 
+  filter(rating=='SUPER GOLD') %>% 
+  ggplot(aes(y=(fct_infreq(country))))+
+  geom_bar()+
+  labs(x='Super Gold Medals',
+       title='Super Gold Medals by Country')+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+
+```{r}
+
+```
+

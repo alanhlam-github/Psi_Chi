@@ -1,0 +1,221 @@
+---
+title: "Psi Chi R - November 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+Start Date: 1 Nov 2024
+
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
+
+[**Source**: Psi Chi R](https://osf.io/dhrav/)
+
+Welcome to the contest for November! The prompts can be found here, and the data is available here. The contest will run until the last day of November (November 30th), latest time zone on earth. The [**contest entry form is available here**](https://forms.gle/NKSxJ22XVdHArUP7A)
+
+```{r setup, warning=F,message=F}
+knitr::opts_chunk$set(echo = T,message = F,warning = F)
+
+setwd("C:/Users/alanh/Documents/R/Psi_Chi_R")
+
+library(tidyverse)
+
+data=read_csv('data.csv')
+
+#access CSV directly through URL; local copy will be overwritten with a different month's data
+
+#data= read.csv('https://osf.io/download/7uc9x/')
+```
+
+## Skim and clean
+```{r}
+## EDA
+
+names(data) = make.names(colnames(data))
+
+skimr::skim(data)
+
+
+```
+
+
+## Data processing (level 1)
+
+Level 1: 
+
+Write a script to create a visualization showing the distribution of the ‘Quality of Sleep’ variable. Is ‘quality of sleep’ normally distributed?
+
+```{r}
+#no, Quality of Sleep isn't normally distributed.
+hist(data$Quality.of.Sleep)
+```
+
+Write a script to identify any outliers present in the ‘Stress Level’ variable. Are there any outliers present in ‘Stress Level?’
+```{r}
+#Yes, there are outliers.
+boxplot(data$Stress.Level)
+title(ylab='Stress Level')
+
+data %>% 
+  ggplot(aes(y=Stress.Level,x=Person.ID))+
+  geom_boxplot(outlier.shape= NA)+
+  geom_jitter()+
+  theme_bw()
+```
+
+## Descriptive Statistics (level 2)
+
+Level 2: If you identify any outliers present in the ‘Stress Level’ variable, write a script that removes the outliers.
+
+```{r}
+data %>% 
+  group_by(Stress.Level) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+data1 = data %>% 
+  filter(Stress.Level < 55)
+
+boxplot(data1$Stress.Level)
+title(main = 'no outliers',ylab='Stress Level')
+
+data1 %>% 
+  ggplot(aes(y=Stress.Level,x=Person.ID))+
+  geom_boxplot(outlier.shape= NA)+
+  geom_jitter()+
+  theme_bw()
+```
+
+Find the min, median, max, average, and standard deviation of ‘Stress Level,’ ‘Quality of Sleep,’ and ‘Physical Activity Level.’
+
+```{r}
+desc_stats = function(x){
+  c(min = min(x,na.rm=T),
+    median = median(x,na.rm=T),
+    median = median(x,na.rm=T),
+    max = max(x,na.rm=T),
+    mean = mean(x,na.rm=T),
+    sd = sd(x,na.rm=T))
+}
+
+desc_list = list("Stress.Level","Quality.of.Sleep","Physical.Activity.Level")
+```
+
+```{r}
+results= list()
+
+for (x in desc_list){
+  results[[x]]=desc_stats(data1[[x]])
+}
+
+print(results)
+```
+
+
+```{r}
+## using PURRR; stick with base
+
+# results1 = map(desc_list,~desc_stats(data1[[.x]]))
+# 
+# names(results1) = desc_list
+# 
+# results1
+```
+
+## Data visualization (level 3)
+
+Level 3: 
+Plot the relationship between ‘Age’ and ‘Quality of Sleep.’ 
+
+```{r}
+data1 %>% 
+  ggplot(aes(x=Age,y=Quality.of.Sleep,col=Quality.of.Sleep))+
+  geom_point()+
+  geom_jitter()+
+  theme_bw()+
+  labs(col=' ',y='Sleep Quality',
+       title = 'Sleeping Beauty')+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+```{r}
+data1 %>% 
+  ggplot(aes(y=Occupation,x=rev(Quality.of.Sleep),fill=Gender))+
+  geom_col()+
+  theme_bw()+
+  labs(fill=' ',x='Sleep Quality',
+       title = 'Sleeping "On the Job"',
+       y='Occupation')+
+  theme(plot.title = element_text(hjust = .5))
+
+data1 %>% 
+  ggplot(aes(x=Age,y=Quality.of.Sleep,fill=Sleep.Disorder))+
+  geom_col()+
+  theme_bw()+
+  labs(fill=' ',y='Sleep Quality',
+       title = 'Sleeping Differently')+
+  theme(plot.title = element_text(hjust = .5))+
+  facet_grid(Gender~Sleep.Disorder)
+```
+
+Create a table to show the average ‘Stress Level’ by ‘Occupation.’
+```{r}
+tab1 = data1 %>% 
+  group_by(Occupation) %>% 
+  summarise(Avg_Stress = mean(Stress.Level,na.rm = T)) %>% 
+  arrange(desc(Avg_Stress))
+
+print(tab1)
+
+tab1 %>% 
+  ggplot(aes(y=fct_inorder(Occupation),x=Avg_Stress,fill=Avg_Stress))+
+  geom_col()+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = .5))+
+  labs(title="Who's the 'Meanest' (Stress) of Them All?",x='Mean Stress Levels',fill=" ",y='Occupation')
+```
+
+
+```{r}
+# dollar format
+# dollars = function(x) {
+#   paste0("$", format(x,big.mark= ",",scientific=F))
+# }
+
+```
+
+
+## Inferential statistics (level 4)
+
+Level 4: Is there a relationship between ‘Quality of Sleep’ and ‘Stress Level?’
+```{r}
+shapiro.test(data1$Quality.of.Sleep)
+
+shapiro.test(data1$Stress.Level)
+
+hist(data1$Quality.of.Sleep)
+
+hist(data1$Stress.Level)
+
+cor.test(data1$Quality.of.Sleep,data1$Stress.Level,method = "kendall")
+
+#yes, there's a relationship
+```
+
+
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```

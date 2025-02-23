@@ -1,0 +1,205 @@
+---
+title: "Psi Chi R - October 2024"
+author: "by Alan Lam"
+#date: "`r Sys.Date()`"
+#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
+output:
+  html_document:
+    theme: readable
+    always_allow_html: yes
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: no
+    anchor_sections: TRUE
+    code_folding: hide
+    code_download: true
+---
+Start Date: Oct. 7, 2024
+
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
+
+[**Source**: Psi Chi R](https://osf.io/acuhe/wiki/home/)
+
+
+```{r setup, warning=F,message=F}
+knitr::opts_chunk$set(echo = T,message = F,warning = F)
+library(tidyverse)
+
+data=read.csv('data.csv')
+#write.csv(data,'data.csv')
+```
+
+
+```{r}
+## EDA
+SmartEDA::ExpData(data)
+
+skimr::skim(data)
+
+
+```
+
+
+## Data processing (level 1)
+
+
+
+```{r}
+### Write a script that will filter out movies that are missing a value in the ‘Budget,’ ‘RunTime,’ ‘ParentalRating’ and ‘Rating’ columns.
+
+data1 = data %>% 
+  filter(complete.cases(Budget),
+         complete.cases(RunTime),
+         complete.cases(ParentalRating),
+         complete.cases(Rating)) %>% 
+  mutate(DATE= mdy(Release_Date)) %>% 
+  select(DATE,Release_Date,everything())
+```
+
+
+
+```{r}
+### Right now, the genre columns cannot be properly analyzed due to formatting (e.g., Action| Fantasy| Horror| Mystery| Romance). Write a script that will separate the column into multiple Genre categories.
+
+data2 = data1 %>% 
+  separate_wider_delim(Genres, delim = "|",
+                       names_sep = "_",
+                       too_few = "align_start")
+
+
+# weird how Genres1 became sensible words
+# data3 = data2 %>% 
+#   mutate(Genres2 = strsplit(as.character(Genres1),"\\,")) %>% 
+#   unnest() %>% 
+#   select(Genres2,Genres1,Genres,everything())
+```
+
+
+## Descriptive Statistics (level 2)
+
+
+```{r}
+### Write a script that will provide the average, standard deviation, median, and range of the ‘Rating’ variable. Note the values you got from running the code
+
+summary(data2$Rating,na.rm=T)
+
+sd(data2$Rating,na.rm = T)
+
+# Average = 5.0, Stand. Dev. = 1.5,
+# Median = 4.9, Range = 1 to 9.6
+```
+
+
+
+```{r}
+### FILTER BY MAIN GENRE
+### Write a script that will show the average ratings by a movie’s main genre. 
+
+data2 %>% 
+  group_by(Title,Genres_1) %>% 
+  summarise(Rating = mean(Rating,na.rm = T)) %>% 
+  arrange(desc(Rating))
+```
+
+## Data visualization (level 3)
+
+
+
+```{r}
+### Create a graph that shows the ‘Budget’ for the movies in the dataset over time.
+
+data2 %>% 
+  distinct(Title,DATE,.keep_all = T) %>% 
+  ggplot(aes(x=DATE,y=Budget))+
+  geom_line()+
+  theme_bw()
+
+# Something weird is happening with the Release_Date column showing 1905 for movies like Habit (2017) or Voidfinder (2017)
+```
+
+```{r}
+# extract year out of `Title` instead
+
+data3 = data2 %>% 
+  mutate(YEAR = str_extract(Title, "\\(\\d{4}\\)")) %>% 
+  mutate(YEAR1 = str_extract(YEAR, "\\d{4}")) %>% 
+  mutate(YEAR2 = as.Date(paste0(YEAR1,"-01-01"))) %>% 
+  select(YEAR2,YEAR1,YEAR,everything())
+
+# dollar format
+dollars = function(x) {
+  paste0("$", format(x,big.mark= ",",scientific=F))
+}
+
+data3 %>% 
+  ggplot(aes(x=YEAR2,y=Budget))+
+  geom_line()+
+  theme_bw()+
+  labs(x='Release Year',
+       y='Movie Budget',
+       title='From Box Office to Blockbuster',
+       subtitle='A Decade-by-Decade Look into Movie Budgets')+
+  theme(plot.title = element_text(hjust = .5),
+        plot.subtitle = element_text(hjust = .5),
+        axis.text.y=element_text(vjust=0,angle = 45))+
+  scale_y_continuous(labels = dollars)
+```
+
+
+## Inferential statistics (level 4)
+
+```{r}
+### Do movies with bigger budgets get better ratings?
+qqplot(data3$Budget,data3$Rating)
+```
+
+```{r}
+#No, there's no correlation between budget and rating.
+cor.test(data3$Budget,data3$Rating,method = 'kendall')
+```
+
+```{r}
+data3 %>% 
+  ggplot(aes(x=Budget,y=Rating,col=Budget))+
+  geom_point(size=2)+
+  theme_bw()+
+  scale_x_continuous(labels = dollars)
+```
+
+
+
+```{r}
+
+### Do movies in the Horror genre get better ratings than Mystery movies? 
+
+#filter isn't showing anything. Odd.
+#Check WS
+
+horror= data3 %>%
+  rowwise() %>%
+  filter(any(c_across(starts_with("Genres_")) == " Horror"))
+
+mystery = data3 %>%
+  rowwise() %>%
+  filter(any(c_across(starts_with("Genres_")) == " Mystery"))
+
+```
+
+```{r}
+shapiro.test(mystery$Rating)
+shapiro.test(horror$Rating)
+
+hist(mystery$Rating)
+hist(horror$Rating)
+
+t.test(mystery$Rating,horror$Rating)
+#Yes, Horror does get better ratings than Mystery.
+```
+
+
+```{r include=FALSE}
+#beep when done
+if (require("beepr",quietly = T))
+  beepr::beep(2)
+```

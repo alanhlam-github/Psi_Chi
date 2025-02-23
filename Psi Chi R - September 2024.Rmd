@@ -7,7 +7,7 @@ output:
   html_document:
     theme: readable
     always_allow_html: yes
-    df_print: kable
+    df_print: paged
     toc: yes
     toc_float: yes
     number_sections: no
@@ -24,17 +24,16 @@ Report Date: `r format(Sys.Date(), '%d %B %Y')`
 According to the National Day Calendar, National Coffee Day is September 29th(plus, with back to school in full swing, it seems appropriate)! This contest won’t keep you working late, we’ll keep it short and sweet (like espresso).
 
 ```{r setup, warning=F,message=F}
-#library(tidyverse)
-#library(purr)
+library(tidyverse)
 
-library(dplyr)
-library(ggplot2)
-
-data = read.csv('https://osf.io/download/jma8e/')
+#data = read.csv('https://osf.io/download/jma8e/')
+data=read.csv('data.csv')
+#write.csv(data,'data.csv')
 ```
 
-## EDA
+
 ```{r}
+## EDA
 #skimer=skimr::skim(data)
 
 data1=data %>% 
@@ -43,49 +42,143 @@ data1=data %>%
 
 ## Data processing (level 1)
 
+### Create a table that shows how many times each type of roast is represented in the data set.
 ```{r}
-#-Create a table that shows how many times each type of roast is represented in the data set.
 
-table1_roast=data %>% 
+table1_roast=data1 %>% 
   filter(complete.cases(roast)) %>% 
-  mutate(across(roast, ~ if_else(. == "", "N/A", .))) %>% 
+  #mutate(across(roast, ~ if_else(. == "", "N/A", .))) %>% 
   group_by(roast) %>% 
-  count() %>% 
-  arrange(-n)
+  summarise(COUNT = n()) %>% 
+  arrange(-COUNT)
 
-print(table1_roast)
+table1_roast
 ```
 
+### Create a table that shows how many times each roaster is represented in the data set.
 ```{r}
-# -Create a table that shows how many times each roaster is represented in the data set.
-library(stringr)
+
+#library(stringr)
 
 table2_roaster=data1 %>% 
   filter(complete.cases(roaster)) %>% 
   mutate(roaster = case_when(str_detect(roaster,"Simon Hsieh") ~ "Simon Hsieh", TRUE~roaster))%>%
   group_by(roaster) %>% 
-  count() %>% 
-  arrange(-n)
+  summarise(COUNT = n()) %>% 
+  arrange(-COUNT)
 
-print(table2_roaster)
+table2_roaster
 ```
-
 
 ## Descriptive Statistics (level 2)
 
- What is the cost of the least and most expensive coffee?-What is the average rating of the coffee reviewed in the dataset? What is the most received rating?
+### What is the average cost (USD) for 100 grams of coffee reviewed in the data set?
 ```{r}
-#-What is the average cost (USD) for 100 grams of coffee reviewed in the data set?
-data1 %>% 
-  summarise(Average_Cost = mean(X100g_USD))
+mean(data1$X100g_USD,na.rm = T)
 # Average cost is $9.32 for 100 grams of coffee
 ```
 
-## Data visualization (level 3) -Create a table that shows the roast type and average ratings based on the roaster.-Create a graph that shows the cost (USD) for 100 grams of coffee based on the bean origin (origin 1)
+### What is the cost of the least and most expensive coffee?
+```{r}
 
-## Inferential statistics (level 4)-Is there a significant difference in the rating between roasts? If so, which one(s)?
+a1=data1 %>% 
+  summarize(least = min(X100g_USD,na.rm = T),
+            most = max(X100g_USD,na.rm = T)) 
+  
+
+a1
+# Most expensive is $132.28 and least expensive is $0.12.
+```
+
+### What is the average rating of the coffee reviewed in the dataset?
+```{r}
+
+mean(data1$rating,na.rm = T)
+# Average rating is 93.11
+```
+
+### What is the most received rating?
+```{r}
+
+data1 %>% 
+  group_by(rating) %>% 
+  count() %>% 
+  arrange(-n) %>% 
+  head(5)
+# Most received rating is a 93
+```
+
+## Data visualization (level 3)
+
+### Create a table that shows the roast type and average ratings based on the roaster.
+```{r}
+dv1=data1 %>% 
+  group_by(Roast_Type=roast,Roaster=roaster) %>% 
+  summarise(Average_Rating=mean(rating,na.rm = T)) %>% 
+  arrange(-Average_Rating)
+
+dv1
+```
+
+### Create a graph that shows the cost (USD) for 100 grams of coffee based on the bean origin (origin 1)
+```{r}
+dv2=data1 %>% 
+  group_by(origin_1) %>% 
+  summarise(Roast_Count = n(),
+            Cost=sum(X100g_USD,na.rm = T))
+
+dv2 %>% 
+  ggplot(aes(y=Cost,x=Roast_Count))+
+  geom_point()+
+  theme_bw()+
+  labs(x="Roast Types by Count",
+       y="Cost for 100 Grams of Coffee",
+       title="Espresso Yourself: The Cost of Coffee")+
+  theme(plot.title = element_text(hjust = .5))
+```
+
+## Inferential statistics (level 4)
+
+### Is there a significant difference in the **rating** between roasts? If so, which one(s)?
+```{r}
+table3_sig_diff=data1 %>%
+  select(roast,rating) %>% 
+  group_by(roast)
+
+```
+
 
 ```{r}
+## Create DFs for roast
+test_dark = table3_sig_diff%>% 
+  filter(roast=="Dark")
+
+test_NA = table3_sig_diff%>% 
+  filter(roast=="N/A")
+
+test_MD = table3_sig_diff%>% 
+  filter(roast=="Medium-Dark")
+
+test_light = table3_sig_diff%>% 
+  filter(roast=="Light")
+
+test_med = table3_sig_diff%>% 
+  filter(roast=="Medium")
+
+test_ML = table3_sig_diff%>% 
+  filter(roast=="Medium-Light")
+```
+
+## Normality test
+```{r}
+
+roast_type = c("Dark", "N/A", "Medium-Dark", "Light", "Medium", "Medium-Light")
+
+map(roast_type, ~ {
+  filtered =table3_sig_diff %>%
+    filter(roast == .x)
+  shapiro.test(filtered$rating)
+})
 
 ```
 
