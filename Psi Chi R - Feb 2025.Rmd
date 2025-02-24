@@ -29,15 +29,13 @@ setwd("~/R/Psi_Chi_R")
 
 library(tidyverse)
 
-data=read_csv('data.csv')
-
-##total for bottom row
+#total for bottom row
 sum_rows = function(x) {
-  x = as.data.frame(x) # Ensure x is a data frame
+  x = as.data.frame(x)
   sums = sapply(x,function(col) if (is.numeric(col)) sum(col, na.rm = T) else NA)
-  sums = as.data.frame(t(sums)) # Convert to data frame
-  names(sums) = names(x) # Retain column names
-  rbind(x, sums) # Bind the sum row to the original data frame
+  sums = as.data.frame(t(sums))
+  names(sums) = names(x)
+  rbind(x, sums)
 }
 
 ## right column for total
@@ -46,17 +44,39 @@ sum_cols = function(x) {
   x
 }
 
-#dollar format function; copy/paste up top for easy reference
+#dollar format function
 dollars = function(x) {
   paste0("$",format(x,big.mark= ",",scientific=F))
+}
+
+desc_stats = function(x){
+  c(min = min(x,na.rm=T),
+    mode = mode(x,na.rm=T),
+    median = median(x,na.rm=T),
+    max = max(x,na.rm=T),
+    mean = mean(x,na.rm=T),
+    sd = sd(x,na.rm=T))
+}
+
+#remove upper outliers
+upper_fence = function(x){
+  quantile(x,.75) + (1.5*IQR(x))
+}
+
+#remove lower outliers
+lower_fence = function(x){
+  quantile(x,.25) - (1.5*IQR(x))
 }
 ```
 
 ## Clean and EDA
 ```{r}
+data=read_csv('data.csv')
+
 names(data) = make.names(colnames(data))
 
-SmartEDA::ExpData(data,type=2)
+SmartEDA::ExpData(data,type=2) %>% 
+  arrange(-Per_of_Missing)
 ```
 
 # Your tasks for the PsiChiR contest for Feb. 2025 include:
@@ -68,26 +88,28 @@ data1 = data %>%
   filter(VGeoCountry == 'United States',
          Race == '1') %>% 
   tibble()
+
 ```
 
 
 ## Level 2: For the remaining participants, calculate the percentage of participants who fell into each income category (1 through 5).
 
 ```{r}
-data1 %>% 
+data1_table = data1 %>% 
   mutate(Income = as.character(Income)) %>% 
   group_by(Income) %>% 
   summarise(headcount = n()) %>% 
-  mutate(percent = headcount/sum(headcount,na.rm = T) * 100) %>% 
-  arrange(percent) %>% 
+  mutate(percent = headcount/sum(headcount,na.rm = T) * 100) %>%   arrange(desc(percent)) %>% 
   sum_rows() %>% 
   mutate(percent = paste(round(percent,2),"%"))
+
+print(data1_table)
 ```
 
 ## Level 3: Create a graph (such as a bar graph) that displays the M and SD for "General Support for Affirmative Action" (variable = "AA") across income groups.
 
-
 ```{r}
+#M for median
 data1.5 = data1 %>% 
   group_by(Income) %>% 
   summarise(Mean = mean(AA,na.rm = T),
@@ -95,44 +117,95 @@ data1.5 = data1 %>%
             SD = sd(AA,na.rm=T))
 
 data1.5 %>% 
-  ggplot(aes(x=Income))+
-  geom_bar()+
-  facet_wrap(~Median~SD)
+  ggplot(aes(x=Income,y=Median))+
+  geom_col(fill='darkblue')+
+  theme_bw()+
+  labs(title='Median of AA by Income')+
+  theme(plot.title = element_text(hjust = .5))
+
+data1.5 %>% 
+  ggplot(aes(x=Income,y=SD))+
+  geom_col(fill='darkred')+
+  theme_bw()+
+  labs(title='Stand Deviation of AA by Income')+
+  theme(plot.title = element_text(hjust = .5))
 ```
 
-## Level 4: Test whether "General Support for Affirmative Action" (variable = "AA") differs across income group.
 
-Affirmative Action & Income: Turns out, Money Does Talk (and So Do Averages). (Slightly cynical, winking at the obvious)
-Support for Affirmative Action: Less About Principle, More About Paycheck? (Just Kidding... Mostly.) (Self-deprecating humor, hints at a deeper point)
-Income Levels and Affirmative Action Support: The Numbers Don't Lie (Unless They're Lying About Lying). (Meta-humor, questioning the data itself)
-Affirmative Action: Does Your Wallet Dictate Your Stance? Let's Find Out! (Spoiler: Probably.) (Bold statement, plays with expectations)
-From Rags to Riches (and Affirmative Action Opinions): A Statistical Journey. (Overly dramatic, like a movie trailer)
-Affirmative Action Support: The Rich vs. The Not-So-Rich (Averages and Standard Deviations Throwing Shade). (Uses slang, playful antagonism)
-Affirmative Action: Because Everyone Deserves a Fair Shot (Unless They're Already Winning). (Sarcastic, addresses a potential counter-argument)
-Income and Affirmative Action: A Love Story Told Through the Cold, Hard Logic of Statistics. (Irony, juxtaposing romance with data)
-Affirmative Action Support: The More You Make, The... Well, You'll See. (Data Spoilers Ahead!) (Teasing, encourages the audience to look at the chart)
+## Level 4: Test whether "General Support for Affirmative Action" (variable = "AA") differs across income group.
 
 ```{r}
 data1 %>% 
   ggplot(aes(x=Income,y=AA))+
   geom_col(fill='darkgreen')+
   theme_bw()+
-  labs(x='Income Group',y='Affirmative Action',title="Affirmative Action Support: The More You Make, The More... Well, You'll See.")+
+  labs(x='Income Group',y='Affirmative Action Support',title="Affirmative Action Across the Income-verse")+
   theme(plot.title = element_text(hjust = .5))
 ```
 
 ```{r}
-t.test(data1$Income,data1$AA)
+#non-normality
+shapiro.test(data1$Income)
+shapiro.test(data1$AA)
+
+hist(data1$Income)
+hist(data1$AA)
+```
+
+```{r}
+#yes, support for AA differs among income group
+wilcox.test(data1$Income,data1$AA)
+```
+
+## Extra Misc.
+
+```{r}
+cor(data1$Age,select_if(data1,is.numeric))
+
+cor.test(data1$Age,data1$AA)
+
+qqnorm(data1$Age)
+
+qqnorm(data1$AA)
+
+qqplot(data1$Age,data1$AA)
+
+data1 %>% 
+  ggplot(aes(Age,AA))+
+  geom_col()
+```
+
+```{r}
+library(tidymodels)
+
+data1_split = initial_split(data1,prop=.75)
+
+data1_test = testing(data1_split)
+
+data1_train = training(data1_split)
 ```
 
 
-In order to complete each level, you need to complete all levels before (so in order to complete level 4, you also need to do 1, 2, and 3 correctly).
+```{r}
+data1_train %>% 
+  ggplot(aes(Age,AA))+
+  geom_point()
 
-Data is from this study (Lee & Outton, 2020)
+model = fit(object = linear_reg(),formula = Age ~ AA,data=data1_train)
 
-Dataset can be accessed here
+tidy(model)
+```
 
-Submit your entry here
+```{r}
+model_results = data1_test %>% 
+  mutate(predict(model,new_data = data1_test))
+
+model_results %>% 
+  ggplot()+
+  theme_bw()+
+  geom_point(aes(x=Age,y=AA))+
+  geom_point(aes(x=Age,y=.pred),col='red')
+```
 
 
 ```{r include=F}
