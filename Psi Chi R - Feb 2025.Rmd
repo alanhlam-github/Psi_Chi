@@ -1,7 +1,6 @@
 ---
 title: "Psi Chi R - Feb 2025"
 #date: "`r Sys.Date()`"
-#date: "Date: `r format(Sys.Date(), '%d %B %Y')`" 
 output:
   html_document:
     theme: readable
@@ -14,9 +13,11 @@ output:
     code_folding: hide
     code_download: true
 ---
+Start Date: 23 Feb 2025
 
+Report Date: `r format(Sys.Date(), '%d %B %Y')`
 
-https://osf.io/by4hr/wiki/home/
+[Source: Psi Chi R](https://osf.io/by4hr/wiki/home/)
 
 ```{r warning=F,message=F}
 knitr::opts_chunk$set(echo = T,message = F,warning = F)
@@ -69,6 +70,7 @@ lower_fence = function(x){
 }
 ```
 
+
 ## Clean and EDA
 ```{r}
 data=read_csv('data.csv')
@@ -76,12 +78,12 @@ data=read_csv('data.csv')
 names(data) = make.names(colnames(data))
 
 SmartEDA::ExpData(data,type=2) %>% 
-  arrange(-Per_of_Missing)
+  arrange(desc(Per_of_Missing))
 ```
+Your tasks for the PsiChiR contest for Feb. 2025 include:
 
-# Your tasks for the PsiChiR contest for Feb. 2025 include:
-
-## Level 1: Remove participants outside of the United States AND participants who are not identified as "white" (white participants are coded as "1" for the variable "Race").
+## Level 1:
+Remove participants outside of the United States AND participants who are not identified as "white" (white participants are coded as "1" for the variable "Race").
 
 ```{r}
 data1 = data %>% 
@@ -92,21 +94,24 @@ data1 = data %>%
 ```
 
 
-## Level 2: For the remaining participants, calculate the percentage of participants who fell into each income category (1 through 5).
+## Level 2:
+For the remaining participants, calculate the percentage of participants who fell into each income category (1 through 5).
 
 ```{r}
 data1_table = data1 %>% 
   mutate(Income = as.character(Income)) %>% 
   group_by(Income) %>% 
   summarise(headcount = n()) %>% 
-  mutate(percent = headcount/sum(headcount,na.rm = T) * 100) %>%   arrange(desc(percent)) %>% 
+  mutate(percent = headcount/sum(headcount,na.rm = T) * 100) %>%
+  arrange(desc(percent)) %>% 
   sum_rows() %>% 
   mutate(percent = paste(round(percent,2),"%"))
 
 print(data1_table)
 ```
 
-## Level 3: Create a graph (such as a bar graph) that displays the M and SD for "General Support for Affirmative Action" (variable = "AA") across income groups.
+## Level 3:
+Create a graph (such as a bar graph) that displays the M and SD for "General Support for Affirmative Action" (variable = "AA") across income groups.
 
 ```{r}
 #M for median
@@ -129,10 +134,12 @@ data1.5 %>%
   theme_bw()+
   labs(title='Standard Deviation of AA by Income')+
   theme(plot.title = element_text(hjust = .5))
+
 ```
 
 
-## Level 4: Test whether "General Support for Affirmative Action" (variable = "AA") differs across income group.
+## Level 4:
+Test whether "General Support for Affirmative Action" (variable = "AA") differs across income group.
 
 ```{r}
 data1 %>% 
@@ -155,56 +162,6 @@ hist(data1$AA)
 ```{r}
 #yes, support for AA differs among income group
 wilcox.test(data1$Income,data1$AA)
-```
-
-## Extra Misc.
-
-```{r}
-cor(data1$Age,select_if(data1,is.numeric))
-
-cor.test(data1$Age,data1$AA)
-
-qqnorm(data1$Age)
-
-qqnorm(data1$AA)
-
-qqplot(data1$Age,data1$AA)
-
-data1 %>% 
-  ggplot(aes(Age,AA))+
-  geom_col()
-```
-
-```{r}
-library(tidymodels)
-
-data1_split = initial_split(data1,prop=.75)
-
-data1_test = testing(data1_split)
-
-data1_train = training(data1_split)
-```
-
-
-```{r}
-data1_train %>% 
-  ggplot(aes(Age,AA))+
-  geom_point()
-
-model = fit(object = linear_reg(),formula = Age ~ AA,data=data1_train)
-
-tidy(model)
-```
-
-```{r}
-model_results = data1_test %>% 
-  mutate(predict(model,new_data = data1_test))
-
-model_results %>% 
-  ggplot()+
-  theme_bw()+
-  geom_point(aes(x=Age,y=AA))+
-  geom_point(aes(x=Age,y=.pred),col='red')
 ```
 
 
