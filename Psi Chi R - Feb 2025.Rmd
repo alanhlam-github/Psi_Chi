@@ -127,7 +127,7 @@ data1.5 %>%
   ggplot(aes(x=Income,y=SD))+
   geom_col(fill='darkred')+
   theme_bw()+
-  labs(title='Stand Deviation of AA by Income')+
+  labs(title='Standard Deviation of AA by Income')+
   theme(plot.title = element_text(hjust = .5))
 ```
 
