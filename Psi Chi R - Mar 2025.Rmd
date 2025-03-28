@@ -80,19 +80,11 @@ data %>%
   head()
 ```
 
-Level 2: Produce the means and standard deviations for the following variables:
+## Level 2: Produce the means and standard deviations for the following variables:
+
 GPA
 
-```{r}
-level2_list = c()
-desc_stats(data$GPA) %>% print()
-```
-
 Male_score (recognition for male psychologists like Sigmund Freud; higher scores = more recognition)
-
-```{r}
-desc_stats()
-```
 
 Female_score (recognition for psychologist women)
 
@@ -100,13 +92,66 @@ POC_score (recognition for psychologists of color)
 
 White_score (recognition for white psychologists)
 
-Level 3: Create a graph to compare the mean scores for recognition of women and for recognition of men.
+```{r}
+var_list = c('GPA','Male_score','Female_score','POC_score','White_score')
 
-Level 4: Run an independent-samples t-test comparing the mean recognition of women (Female_score) variable across male and female participants (Gender).
+var_res = list()
+
+for (x in var_list){
+  var_res[[x]] = desc_stats(data[[x]])
+}
+
+print(var_res)
+```
+
+
+## Level 3: Create a graph to compare the mean scores for recognition of women and for recognition of men.
+
+```{r}
+data=data %>% 
+  select(Female_score,Male_score,everything())
+
+#pivot longer to reshape DF for mean scores. See https://tidyr.tidyverse.org/reference/pivot_longer.html
+
+data1=data %>% 
+  pivot_longer(cols = c('Male_score','Female_score'),names_to = 'Gender_Recognition',values_to = 'Mean_Score') %>% 
+  select(Gender_Recognition,Mean_Score,everything())
+
+data1 %>% 
+  ggplot(aes(x=Gender_Recognition,y=Mean_Score,fill = Gender_Recognition))+
+  geom_col()+
+  theme_bw()+
+  labs(x=' ',y='Mean Score',title='"Who Gets the Kudos? An Average Look at Psychologist Recognition"', subtitle='Because Equality is Just a Suggestion.')+
+  guides(fill = 'none')+
+  theme(plot.title = element_text(hjust = .5),plot.subtitle = element_text(hjust = .5))
+```
+
+
+## Level 4: Run an independent-samples t-test comparing the mean recognition of women (Female_score) variable across male and female participants (Gender).
+
+```{r}
+t.test(data$Female_score,data$Gender)
+```
 
 Level 4 Bonus: Run an independent-samples t-test comparing the mean recognition of women (Female_score) variable between people who have completed a history of psychology course and people who have not taken a history of psychology course (Taken_history).
 
+```{r}
+data_no_hist = data %>% 
+  select(Taken_history,Female_score,everything()) %>% 
+  filter(is.na(Taken_history))
 
+data_yes_hist = data %>% 
+  select(Taken_history,Female_score,everything()) %>% 
+  filter(!is.na(Taken_history))
+
+#no statistical significance between the two groups
+t.test(data_yes_hist$Female_score,data_no_hist$Female_score)
+```
+
+### Data set: 
+```{r echo=F}
+downloadthis::download_this(data,output_name = 'Mar2025_data',output_extension = '.xlsx')
+```
 
 ```{r include=F}
 #beep when done
