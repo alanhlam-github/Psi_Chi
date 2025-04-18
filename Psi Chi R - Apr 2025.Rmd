@@ -1,5 +1,5 @@
 ---
-title: "Psi Chi R - Mar 2025"
+title: "Psi Chi R - Apr 2025"
 #date: "`r Sys.Date()`"
 output:
   html_document:
@@ -74,24 +74,73 @@ SmartEDA::ExpData(data,type=2) %>%
   arrange(desc(Per_of_Missing))
 ```
 
-## Level 1: Let’s examine the average rating column for normality and outliers. Create a histogram, boxplot, and Q-Q plot. Please paste your graphs into the code/output you provide. Finally, run a Shapiro-Wilks test. Is the data normally distributed? Are there any outliers? 
-
-```{r}
-
-```
-
-
-Level 2: Taking into consideration both average rating AND the number of ratings a book has received, what are the top five most popular books?
-
-Level 3: Is there any relationship between when a book was published and its average ratings? 
-
-Level 4: Pick your favorite author (or any author of your choosing) in the dataset and plot the relationship between the number of ratings they receive (column J) and the average ratings for their book (column D). What kind of relationship do you see, if any?
-
-
 ### Data set:
 
 ```{r echo=F}
 downloadthis::download_this(data,output_name = '2025Apr_data',output_extension = '.xlsx')
+```
+
+## Level 1: Let’s examine the average rating column for normality and outliers. 
+
+### Create a histogram, boxplot, and Q-Q plot. Please paste your graphs into the code/output you provide.
+
+```{r}
+data1 = data %>% 
+  mutate(DATE = mdy(publication_date))
+```
+
+```{r}
+data1 %>% 
+  ggplot(aes(x=average_rating))+
+  geom_histogram()
+
+data1 %>% 
+  ggplot(aes(x=average_rating))+
+  geom_boxplot()
+
+data1 %>% 
+  ggplot(aes(sample=average_rating))+
+  stat_qq()+
+  stat_qq_line()
+```
+
+### Finally, run a Shapiro-Wilks test. Is the data normally distributed? Are there any outliers? 
+
+No, data is not normally distributed.
+```{r}
+#shapiro.test(data1$average_rating)
+
+ks.test(data1$average_rating, "pnorm", mean=mean(data1$average_rating), sd=sd(data1$average_rating))
+
+```
+
+
+## Level 2: Taking into consideration both average rating AND the number of ratings a book has received, what are the top five most popular books?
+
+```{r}
+see=data1 %>% 
+  group_by(text_reviews_count) %>% 
+  summarise(aver = mean(average_rating,na.rm=T))
+```
+
+
+## Level 3: Is there any relationship between when a book was published and its average ratings? 
+
+```{r}
+data1 %>% 
+  ggplot(aes(x=DATE,y=average_rating))+
+  geom_point()
+```
+
+## Level 4: Pick your favorite author (or any author of your choosing) in the dataset and plot the relationship between the number of ratings they receive (column J) and the average ratings for their book (column D). What kind of relationship do you see, if any?
+
+```{r}
+data2 = data1 %>% 
+  filter(str_detect(authors,regex("tolkien",ignore_case = T)))
+
+data2 %>% 
+  ggplot(aes(x=ratings_count,y=average_rating))+
+  geom_point()
 ```
 
 ```{r include=F}
