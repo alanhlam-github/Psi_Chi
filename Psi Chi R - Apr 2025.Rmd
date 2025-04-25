@@ -3,6 +3,7 @@ title: "Psi Chi R - Apr 2025"
 #date: "`r Sys.Date()`"
 output:
   html_document:
+    lightbox: true
     theme: readable
     always_allow_html: yes
     df_print: paged
@@ -87,12 +88,10 @@ downloadthis::download_this(data,output_name = '2025Apr_data',output_extension =
 ```{r}
 data1 = data %>% 
   mutate(DATE = mdy(publication_date))
-```
 
-```{r}
 data1 %>% 
   ggplot(aes(x=average_rating))+
-  geom_histogram()
+  geom_histogram(bins=30)
 
 data1 %>% 
   ggplot(aes(x=average_rating))+
@@ -118,22 +117,29 @@ ks.test(data1$average_rating, "pnorm", mean=mean(data1$average_rating), sd=sd(da
 ## Level 2: Taking into consideration both average rating AND the number of ratings a book has received, what are the top five most popular books?
 
 ```{r}
-see=data1 %>% 
-  group_by(text_reviews_count) %>% 
-  summarise(aver = mean(average_rating,na.rm=T))
-```
+data1_top5=data1 %>% 
+  group_by(title,ratings_count,average_rating) %>%
+  reframe(ratings_count) %>% 
+  arrange(desc(ratings_count),desc(average_rating)) %>% 
+  head(5)
 
+print(data1_top5)
+```
 
 ## Level 3: Is there any relationship between when a book was published and its average ratings? 
 
+No relationship detected.
 ```{r}
+#no
 data1 %>% 
   ggplot(aes(x=DATE,y=average_rating))+
   geom_point()
+
 ```
 
 ## Level 4: Pick your favorite author (or any author of your choosing) in the dataset and plot the relationship between the number of ratings they receive (column J) and the average ratings for their book (column D). What kind of relationship do you see, if any?
 
+Picking JRR Tolkien. And no relationship detected.
 ```{r}
 data2 = data1 %>% 
   filter(str_detect(authors,regex("tolkien",ignore_case = T)))
@@ -141,6 +147,13 @@ data2 = data1 %>%
 data2 %>% 
   ggplot(aes(x=ratings_count,y=average_rating))+
   geom_point()
+
+#no normally distributed - run spearman or kendall
+shapiro.test(data2$ratings_count)
+
+shapiro.test(data2$average_rating)
+
+cor.test(data2$ratings_count,data2$average_rating,method = "s")
 ```
 
 ```{r include=F}
