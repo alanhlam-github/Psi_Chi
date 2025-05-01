@@ -130,7 +130,7 @@ print(data1_top5)
 
 No relationship detected.
 ```{r}
-#no
+#no relationship
 data1 %>% 
   ggplot(aes(x=DATE,y=average_rating))+
   geom_point()
@@ -153,7 +153,11 @@ shapiro.test(data2$ratings_count)
 
 shapiro.test(data2$average_rating)
 
-cor.test(data2$ratings_count,data2$average_rating,method = "s")
+hist(data2$ratings_count)
+
+hist(data2$average_rating)
+
+cor.test(data2$ratings_count,data2$average_rating,method = "k")
 ```
 
 ```{r include=F}
