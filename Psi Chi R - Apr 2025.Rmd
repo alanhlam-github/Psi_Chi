@@ -69,6 +69,8 @@ options(scipen=9999)
 ```{r}
 data=read_csv('data.csv')
 
+# data = readxl::read_excel('C:/Users/alanh/Downloads/2025Apr_data.xlsx')
+
 names(data) = make.names(colnames(data))
 
 SmartEDA::ExpData(data,type=2) %>% 
@@ -158,6 +160,17 @@ hist(data2$ratings_count)
 hist(data2$average_rating)
 
 cor.test(data2$ratings_count,data2$average_rating,method = "k")
+```
+
+```{r eval=F}
+#evaluating with Haleigh's code after contest date
+plot(data2$ratings_count,data2$average_rating)
+
+data2_model=data2 %>%
+  lm(average_rating ~ ratings_count, data = .)
+
+summary(data2_model)
+
 ```
 
 ```{r include=F}
