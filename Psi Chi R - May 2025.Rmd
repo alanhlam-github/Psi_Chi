@@ -80,8 +80,8 @@ SmartEDA::ExpData(data,type=2) %>%
 ## Level 1: Preparing the data
 
 ```{r}
-# •	Remove participants who are missing ‘Age’
-# •	Remove participants who are missing ‘Gender’
+# 	Remove participants who are missing ‘Age’
+# 	Remove participants who are missing ‘Gender’
 data1= data %>% 
   filter(!is.na(Age),!is.na(Gender))
 ```
@@ -89,7 +89,7 @@ data1= data %>%
 ### Test your skills: Remove participants missing ‘Age’ and ‘Gender’ in one step, instead of two.
 
 ```{r}
-# •	Create the following variable ‘FACEenmesh’ which measures the extent to which a family is enmeshed, by summing the following items: FACES4, FACES10, FACES16,  FACES22, FACES28, FACES34, FACES40
+# 	Create the following variable ‘FACEenmesh’ which measures the extent to which a family is enmeshed, by summing the following items: FACES4, FACES10, FACES16,  FACES22, FACES28, FACES34, FACES40
 
 data2 = data1 %>% 
   mutate(FACEenmesh = FACES4+ FACES10+ FACES16+  FACES22+FACES28+ FACES34+FACES40) %>% 
@@ -101,12 +101,9 @@ data2 = data1 %>%
 
 ### Identify participants with values considered outliers for ‘FACEenmesh’. 
 
-### Test your skills: Visualize outlier values for ‘FACEenmesh’. 
-•	Remove participants with values considered outliers on ‘FACEenmesh’
-•	Find the mean of ‘FACEenmesh’
-•	Find the standard deviation of ‘FACEenmesh’
-•	Find the median of ‘FACEenmesh’
-•	Find the range of ‘FACEenmesh’
+### Test your skills: Visualize outlier values for ‘FACEenmesh’.
+
+#### Remove participants with values considered outliers on ‘FACEenmesh’; Find the mean of ‘FACEenmesh’; Find the standard deviation of ‘FACEenmesh’; Find the median of ‘FACEenmesh’; Find the range of ‘FACEenmesh’
 
 ```{r}
 boxplot(data2$FACEenmesh)
@@ -118,7 +115,7 @@ data3 = data2 %>%
 ### Test your skills: Find the mean, standard deviation, median, and range of FACEenmesh in one step.
 
 ```{r}
-#range is 7 to 25
+#range is from 7 to 25
 desc_stats(data3$FACEenmesh) %>% 
   print()
 ```
@@ -130,6 +127,7 @@ desc_stats(data3$FACEenmesh) %>%
 No, there isn't.
 
 ```{r}
+#No, there isn't a significant correlation.
 data4 = data3 %>% 
   filter(!is.na(FACEenmesh) & !is.na(Siblings)) %>% 
   select(Siblings,everything())
@@ -138,7 +136,8 @@ cor.test(data4$FACEenmesh,data4$Siblings)
 
 data4 %>% 
   ggplot(aes(y=FACEenmesh,x=Siblings))+
-  geom_point()
+  geom_point()+
+  geom_smooth()
 ```
 
 
@@ -146,21 +145,30 @@ data4 %>%
 
 ```{r}
 data5 = data4 %>% 
-  mutate(siblings_check = case_when(Siblings > 0 ~ "YES",
+  mutate(have_siblings = case_when(Siblings > 0 ~ "YES",
                               TRUE ~ 'NO')) %>% 
-  select(siblings_check,everything())
+  select(have_siblings,everything())
 
-shapiro.test(data5$FACEenmesh[data5$siblings_check=='YES'])
+shapiro.test(data5$FACEenmesh[data5$have_siblings=='YES'])
 
-shapiro.test(data5$FACEenmesh[data5$siblings_check=='NO'])
+shapiro.test(data5$FACEenmesh[data5$have_siblings=='NO'])
 
-shapiro.test(data5$FACEenmesh[data5$siblings_check=='NO'] -data5$FACEenmesh[data5$siblings_check=='YES'])
+hist(data5$FACEenmesh[data5$have_siblings=='YES'])
 
-hist(data5$FACEenmesh[data5$siblings_check=='YES'])
+hist(data5$FACEenmesh[data5$have_siblings=='NO'])
 
-hist(data5$FACEenmesh[data5$siblings_check=='NO'])
+wilcox.test(data5$FACEenmesh~data5$have_siblings)
+```
 
-wilcox.test(data5$FACEenmesh~data5$siblings_check)
+```{r}
+#assumptions for Welch t-test
+
+# data5$dev=with(data5, abs(FACEenmesh - ave(FACEenmesh, have_siblings, FUN = median)))
+# 
+# summary(aov(data5$dev ~data5$have_siblings))
+# 
+# t.test(data5$FACEenmesh~data5$have_siblings,var.equal = F)
+
 ```
 
 ## Level 4: Visualization
@@ -172,19 +180,24 @@ data5 %>%
   ggplot(aes(y=FACEenmesh,x=Siblings))+
   theme_bw()+
   geom_point()+
-  geom_jitter()+
   labs(title='Sibling Rivalry? More Like Sibling Enmeshment',subtitle='A Totally Scientific Look')+
   theme(plot.title = element_text(hjust = .5),
-        plot.subtitle = element_text(hjust = .5))
+        plot.subtitle = element_text(hjust = .5))+
+  geom_smooth()
 ```
 
 
 ### Test your skills: Visualize the difference in enmeshment between people who have siblings and those who do not
 
 ```{r}
-
+data5 %>% 
+  ggplot(aes(x=have_siblings,y=FACEenmesh,fill=have_siblings))+
+  geom_col()+
+  theme_bw()+
+  labs(title='The "Only Child Sanctuary" vs. "Sibling Scrum": Enmeshment Edition',x='Have Siblings')+
+  theme(plot.title = element_text(hjust = .5))+
+  guides(fill ='none')
 ```
-
 
 
 ```{r include=F}
