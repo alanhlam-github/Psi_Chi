@@ -83,7 +83,7 @@ SmartEDA::ExpData(data,type=2) %>%
 # 	Remove participants who are missing ‘Age’
 # 	Remove participants who are missing ‘Gender’
 data1= data %>% 
-  filter(!is.na(Age),!is.na(Gender))
+  filter(!is.na(Age) & !is.na(Gender))
 ```
 
 ### Test your skills: Remove participants missing ‘Age’ and ‘Gender’ in one step, instead of two.
@@ -101,20 +101,28 @@ data2 = data1 %>%
 
 ### Identify participants with values considered outliers for ‘FACEenmesh’. 
 
-### Test your skills: Visualize outlier values for ‘FACEenmesh’.
+```{r}
+data2.1 = data2%>% 
+  filter(FACEenmesh > 25)
 
-#### Remove participants with values considered outliers on ‘FACEenmesh’; Find the mean of ‘FACEenmesh’; Find the standard deviation of ‘FACEenmesh’; Find the median of ‘FACEenmesh’; Find the range of ‘FACEenmesh’
+print(data2.1)
+```
+
+### Test your skills: Visualize outlier values for ‘FACEenmesh’.
 
 ```{r}
 boxplot(data2$FACEenmesh)
-
-data3 = data2 %>% 
-  filter(FACEenmesh <= 25)
+title(main="Looking for FACEenmesh outliers")
 ```
 
-### Test your skills: Find the mean, standard deviation, median, and range of FACEenmesh in one step.
+### Remove participants with values considered outliers on ‘FACEenmesh’; Find the mean of ‘FACEenmesh’; Find the standard deviation of ‘FACEenmesh’; Find the median of ‘FACEenmesh’; Find the range of ‘FACEenmesh’
+
+#### Test your skills: Find the mean, standard deviation, median, and range of FACEenmesh in one step.
 
 ```{r}
+data3 = data2 %>% 
+  filter(FACEenmesh <= 25)
+
 #range is from 7 to 25
 desc_stats(data3$FACEenmesh) %>% 
   print()
@@ -194,8 +202,8 @@ data5 %>%
   ggplot(aes(x=have_siblings,y=FACEenmesh,fill=have_siblings))+
   geom_col()+
   theme_bw()+
-  labs(title='The "Only Child Sanctuary" vs. "Sibling Scrum": Enmeshment Edition',x='Have Siblings')+
-  theme(plot.title = element_text(hjust = .5))+
+  labs(title='"Only Child Sanctuary" vs. "Sibling Scrum"',subtitle= "The Enmeshment Edition",x='Have Siblings')+
+  theme(plot.title = element_text(hjust = .5) , plot.subtitle = element_text(hjust = .5))+
   guides(fill ='none')
 ```
 
